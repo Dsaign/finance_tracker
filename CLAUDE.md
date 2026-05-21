@@ -50,7 +50,7 @@ Nome do produto: **Mirante**.
 
 ## Próximos passos
 
-- [ ] Criar/editar objetivos via UI (modal de formulário)
+- [x] Criar/editar objetivos via UI (modal de formulário)
 
 ## Ambiente de desenvolvimento
 
