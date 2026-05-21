@@ -48,17 +48,23 @@ Todos os models estão prontos e validados:
 ## O que falta desenvolver (próximos passos)
 
 ### Backend (prioridade atual)
-- [ ] `app/main.py` — entrypoint FastAPI com CORS e inclusão de routers
-- [ ] `app/database.py` — engine, SessionLocal, get_db dependency
-- [ ] `app/schemas/` — Pydantic schemas para request/response
-- [ ] `app/services/` — lógica de negócio separada dos routers
-- [ ] `app/routers/institutions.py` — CRUD de instituições
-- [ ] `app/routers/accounts.py` — CRUD de contas e grupos
+- [x] `app/main.py` — entrypoint FastAPI com CORS e inclusão de routers
+- [x] `app/config.py` — Settings via pydantic-settings (lê `.env`)
+- [x] `app/database.py` — engine, SessionLocal, get_db dependency
+- [x] `app/schemas/institution.py` — Pydantic schemas de instituições
+- [x] `app/schemas/account.py` — Pydantic schemas de contas e grupos
+- [x] `app/routers/institutions.py` — CRUD de instituições
+- [x] `app/routers/accounts.py` — CRUD de contas e grupos de contas
 - [ ] `app/routers/transactions.py` — CRUD + busca com filtros
 - [ ] `app/routers/imports.py` — upload e processamento de extrato
 - [ ] `app/routers/tags.py` — CRUD de tags e regras de categorização
 - [ ] `app/routers/goals.py` — CRUD de objetivos e dívidas
 - [ ] `app/routers/dashboard.py` — agregações para gráficos
+
+### Ambiente de desenvolvimento
+- `backend/.venv/` — virtualenv Python com todas as dependências instaladas
+- Ativar: `source backend/.venv/bin/activate`
+- Rodar: `uvicorn app.main:app --reload` (dentro de `backend/`)
 
 ### Frontend (após backend)
 - [ ] Estrutura React + TypeScript + Vite
