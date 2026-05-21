@@ -11,10 +11,10 @@ import { formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
 import type { Transaction, TransactionListResponse } from '@/types'
 
 const FLOW_COLOR: Record<string, string> = {
-  income:   'bg-emerald-100 text-emerald-700',
-  expense:  'bg-rose-100 text-rose-700',
-  payment:  'bg-neutral-100 text-neutral-600',
-  transfer: 'bg-blue-100 text-blue-700',
+  income:   'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  expense:  'bg-rose-500/15 text-rose-600 dark:text-rose-400',
+  payment:  'bg-muted text-muted-foreground',
+  transfer: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
 }
 
 export default function Transactions() {
@@ -79,7 +79,7 @@ export default function Transactions() {
           </SelectContent>
         </Select>
         {data && (
-          <span className="text-sm text-neutral-500 self-center ml-auto">
+          <span className="text-sm text-muted-foreground self-center ml-auto">
             {data.total} transações
           </span>
         )}
@@ -95,7 +95,7 @@ export default function Transactions() {
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-neutral-100 text-neutral-500 text-xs uppercase tracking-wide">
+                <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wide">
                   <th className="px-4 py-3 text-left font-medium">Data</th>
                   <th className="px-4 py-3 text-left font-medium">Descrição</th>
                   <th className="px-4 py-3 text-left font-medium">Tags</th>
@@ -106,8 +106,8 @@ export default function Transactions() {
               </thead>
               <tbody>
                 {data?.items.map(tx => (
-                  <tr key={tx.id} className="border-b border-neutral-50 hover:bg-neutral-50 transition-colors">
-                    <td className="px-4 py-3 text-neutral-500 whitespace-nowrap">{formatDate(tx.date)}</td>
+                  <tr key={tx.id} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
+                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
                     <td className="px-4 py-3 font-medium max-w-xs truncate">{tx.description}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
@@ -128,14 +128,18 @@ export default function Transactions() {
                       </span>
                     </td>
                     <td className={`px-4 py-3 text-right font-mono font-medium ${
-                      tx.flow === 'income' ? 'text-emerald-600' : tx.flow === 'expense' ? 'text-rose-600' : 'text-neutral-700'
+                      tx.flow === 'income'
+                        ? 'text-emerald-600 dark:text-emerald-400'
+                        : tx.flow === 'expense'
+                          ? 'text-rose-600 dark:text-rose-400'
+                          : 'text-foreground'
                     }`}>
                       {tx.flow === 'income' ? '+' : tx.flow === 'expense' ? '-' : ''}{formatBRL(tx.amount)}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <Button
                         variant="ghost" size="icon"
-                        className="h-7 w-7 text-neutral-400 hover:text-rose-500"
+                        className="h-7 w-7 text-muted-foreground hover:text-rose-500"
                         onClick={() => handleDelete(tx)}
                       >
                         <Trash2 size={13} />
@@ -145,7 +149,7 @@ export default function Transactions() {
                 ))}
                 {data?.items.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-neutral-400">
+                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
                       Nenhuma transação encontrada.
                     </td>
                   </tr>
@@ -162,7 +166,7 @@ export default function Transactions() {
           <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
             Anterior
           </Button>
-          <span className="text-sm text-neutral-500 self-center">
+          <span className="text-sm text-muted-foreground self-center">
             Página {page} de {totalPages}
           </span>
           <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>

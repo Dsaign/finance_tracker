@@ -23,7 +23,7 @@ export default function Tags() {
   const [tags, setTags]   = useState<Tag[]>([])
   const [rules, setRules] = useState<CategoryRule[]>([])
   const [loading, setLoading] = useState(true)
-  const [newTag, setNewTag]   = useState({ name: '', color: '#6366f1' })
+  const [newTag, setNewTag]   = useState({ name: '', color: '#33a95a' })
 
   function loadAll() {
     return Promise.all([
@@ -40,7 +40,7 @@ export default function Tags() {
     if (!newTag.name.trim()) return
     try {
       await api.tags.create(newTag)
-      setNewTag({ name: '', color: '#6366f1' })
+      setNewTag({ name: '', color: '#33a95a' })
       await loadAll()
       toast.success('Tag criada')
     } catch (e: unknown) {
@@ -84,7 +84,7 @@ export default function Tags() {
         <CardContent>
           <div className="flex gap-3 items-end">
             <div className="flex-1 space-y-1">
-              <label className="text-xs text-neutral-500">Nome</label>
+              <label className="text-xs text-muted-foreground">Nome</label>
               <Input
                 value={newTag.name}
                 onChange={e => setNewTag(t => ({ ...t, name: e.target.value }))}
@@ -93,12 +93,12 @@ export default function Tags() {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-xs text-neutral-500">Cor</label>
+              <label className="text-xs text-muted-foreground">Cor</label>
               <input
                 type="color"
                 value={newTag.color}
                 onChange={e => setNewTag(t => ({ ...t, color: e.target.value }))}
-                className="h-9 w-14 rounded border border-neutral-200 cursor-pointer px-1"
+                className="h-9 w-14 rounded-md border border-input bg-background cursor-pointer px-1"
               />
             </div>
             <Button onClick={createTag} size="sm">
@@ -113,7 +113,7 @@ export default function Tags() {
         <CardHeader><CardTitle className="text-sm">Tags cadastradas ({tags.length})</CardTitle></CardHeader>
         <CardContent>
           {tags.length === 0 ? (
-            <p className="text-sm text-neutral-400">Nenhuma tag cadastrada.</p>
+            <p className="text-sm text-muted-foreground">Nenhuma tag cadastrada.</p>
           ) : (
             <div className="flex flex-wrap gap-2">
               {tags.map(tag => (
@@ -121,7 +121,7 @@ export default function Tags() {
                   <TagBadge tag={tag} />
                   <button
                     onClick={() => deleteTag(tag)}
-                    className="opacity-0 group-hover:opacity-100 transition-opacity text-neutral-400 hover:text-rose-500"
+                    className="opacity-0 group-hover:opacity-100 transition-opacity text-muted-foreground hover:text-rose-500"
                   >
                     <Trash2 size={11} />
                   </button>
@@ -139,11 +139,11 @@ export default function Tags() {
         </CardHeader>
         <CardContent>
           {rules.length === 0 ? (
-            <p className="text-sm text-neutral-400">Nenhuma regra cadastrada.</p>
+            <p className="text-sm text-muted-foreground">Nenhuma regra cadastrada.</p>
           ) : (
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-neutral-100 text-xs text-neutral-400 uppercase tracking-wide">
+                <tr className="border-b border-border text-xs text-muted-foreground uppercase tracking-wide">
                   <th className="py-2 text-left font-medium">Keyword</th>
                   <th className="py-2 text-left font-medium">Tipo de match</th>
                   <th className="py-2 text-left font-medium">Prioridade</th>
@@ -153,10 +153,10 @@ export default function Tags() {
               </thead>
               <tbody>
                 {rules.map(rule => (
-                  <tr key={rule.id} className="border-b border-neutral-50">
+                  <tr key={rule.id} className="border-b border-border/40">
                     <td className="py-2 font-mono text-xs">{rule.keyword}</td>
-                    <td className="py-2 text-neutral-500">{rule.match_type}</td>
-                    <td className="py-2 text-neutral-500">{rule.priority}</td>
+                    <td className="py-2 text-muted-foreground">{rule.match_type}</td>
+                    <td className="py-2 text-muted-foreground">{rule.priority}</td>
                     <td className="py-2">
                       <div className="flex flex-wrap gap-1">
                         {rule.tags.map(t => <TagBadge key={t.id} tag={t} />)}
@@ -165,7 +165,7 @@ export default function Tags() {
                     <td className="py-2 text-right">
                       <Button
                         variant="ghost" size="icon"
-                        className="h-7 w-7 text-neutral-400 hover:text-rose-500"
+                        className="h-7 w-7 text-muted-foreground hover:text-rose-500"
                         onClick={() => deleteRule(rule)}
                       >
                         <Trash2 size={13} />

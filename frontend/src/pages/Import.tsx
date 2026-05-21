@@ -70,16 +70,16 @@ export default function Import() {
             onDrop={handleDrop}
             onDragOver={e => e.preventDefault()}
             onClick={() => inputRef.current?.click()}
-            className="border-2 border-dashed border-neutral-200 rounded-lg p-10 text-center cursor-pointer
-                       hover:border-indigo-400 hover:bg-indigo-50/30 transition-colors"
+            className="border-2 border-dashed border-border rounded-lg p-10 text-center cursor-pointer
+                       hover:border-primary hover:bg-primary/5 transition-colors"
           >
-            <Upload size={24} className="mx-auto mb-3 text-neutral-400" />
+            <Upload size={24} className="mx-auto mb-3 text-muted-foreground" />
             {file ? (
               <p className="text-sm font-medium">{file.name}</p>
             ) : (
               <>
                 <p className="text-sm font-medium">Arraste o arquivo aqui</p>
-                <p className="text-xs text-neutral-400 mt-1">ou clique para selecionar — CSV (Nubank) ou OFX (Bradesco)</p>
+                <p className="text-xs text-muted-foreground mt-1">ou clique para selecionar — CSV (Nubank) ou OFX (Bradesco)</p>
               </>
             )}
             <input
@@ -103,17 +103,17 @@ export default function Import() {
 
       {/* Resultado */}
       {result && (
-        <Card className="border-emerald-200 bg-emerald-50">
+        <Card className="border-primary/30 bg-primary/10">
           <CardHeader className="pb-2">
-            <CardTitle className="text-sm flex items-center gap-2 text-emerald-700">
+            <CardTitle className="text-sm flex items-center gap-2 text-primary">
               <CheckCircle2 size={16} /> Importação concluída — {result.filename}
             </CardTitle>
           </CardHeader>
-          <CardContent className="text-sm space-y-1 text-emerald-800">
+          <CardContent className="text-sm space-y-1">
             <p><span className="font-medium">{result.total_parsed}</span> linhas lidas</p>
             <p><span className="font-medium">{result.total_inserted}</span> transações inseridas</p>
             {result.total_skipped > 0 && (
-              <p className="flex items-center gap-1 text-amber-700">
+              <p className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
                 <AlertCircle size={13} />
                 {result.total_skipped} duplicatas ignoradas
               </p>
