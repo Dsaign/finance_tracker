@@ -7,10 +7,10 @@ import { formatBRL, formatDate, GOAL_TYPE_LABEL } from '@/lib/utils'
 import type { Goal } from '@/types'
 
 const STATUS_BADGE: Record<string, string> = {
-  active:    'bg-emerald-100 text-emerald-700',
-  completed: 'bg-blue-100 text-blue-700',
-  paused:    'bg-amber-100 text-amber-700',
-  cancelled: 'bg-neutral-100 text-neutral-500',
+  active:    'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+  completed: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  paused:    'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+  cancelled: 'bg-muted text-muted-foreground',
 }
 
 function GoalCard({ goal }: { goal: Goal }) {
@@ -23,38 +23,38 @@ function GoalCard({ goal }: { goal: Goal }) {
           <div>
             <CardTitle className="text-base">{goal.name}</CardTitle>
             {goal.description && (
-              <p className="text-xs text-neutral-500 mt-0.5">{goal.description}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">{goal.description}</p>
             )}
           </div>
           <span className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${STATUS_BADGE[goal.status]}`}>
             {goal.status === 'active' ? 'Ativo' : goal.status === 'completed' ? 'Concluído' : goal.status === 'paused' ? 'Pausado' : 'Cancelado'}
           </span>
         </div>
-        <p className="text-xs text-neutral-400">{GOAL_TYPE_LABEL[goal.goal_type]}</p>
+        <p className="text-xs text-muted-foreground">{GOAL_TYPE_LABEL[goal.goal_type]}</p>
       </CardHeader>
       <CardContent className="space-y-3">
         {isDebt && goal.debt ? (
           <>
             <div className="grid grid-cols-2 gap-2 text-sm">
               <div>
-                <p className="text-xs text-neutral-500">Credor</p>
+                <p className="text-xs text-muted-foreground">Credor</p>
                 <p className="font-medium">{goal.debt.creditor}</p>
               </div>
               <div>
-                <p className="text-xs text-neutral-500">Saldo atual</p>
-                <p className="font-medium text-rose-600">{formatBRL(goal.debt.current_balance)}</p>
+                <p className="text-xs text-muted-foreground">Saldo atual</p>
+                <p className="font-medium text-rose-600 dark:text-rose-400">{formatBRL(goal.debt.current_balance)}</p>
               </div>
               <div>
-                <p className="text-xs text-neutral-500">Valor original</p>
+                <p className="text-xs text-muted-foreground">Valor original</p>
                 <p className="font-medium">{formatBRL(goal.debt.original_amount)}</p>
               </div>
               <div>
-                <p className="text-xs text-neutral-500">Já pago</p>
-                <p className="font-medium text-emerald-600">{formatBRL(goal.debt.paid_amount)}</p>
+                <p className="text-xs text-muted-foreground">Já pago</p>
+                <p className="font-medium text-emerald-600 dark:text-emerald-400">{formatBRL(goal.debt.paid_amount)}</p>
               </div>
               {goal.debt.installments_total && (
                 <div className="col-span-2">
-                  <p className="text-xs text-neutral-500">Parcelas</p>
+                  <p className="text-xs text-muted-foreground">Parcelas</p>
                   <p className="font-medium">
                     {goal.debt.installments_paid ?? 0}/{goal.debt.installments_total}
                   </p>
@@ -62,13 +62,13 @@ function GoalCard({ goal }: { goal: Goal }) {
               )}
             </div>
             <div>
-              <div className="flex justify-between text-xs text-neutral-500 mb-1">
+              <div className="flex justify-between text-xs text-muted-foreground mb-1">
                 <span>Progresso</span>
                 <span>{goal.debt.progress_percent.toFixed(1)}%</span>
               </div>
-              <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+              <div className="h-2 bg-muted rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-indigo-500 rounded-full"
+                  className="h-full bg-primary rounded-full"
                   style={{ width: `${Math.min(goal.debt.progress_percent, 100)}%` }}
                 />
               </div>
@@ -77,11 +77,11 @@ function GoalCard({ goal }: { goal: Goal }) {
         ) : (
           <div className="text-sm">
             <div className="flex justify-between mb-1">
-              <span className="text-neutral-500">Meta</span>
+              <span className="text-muted-foreground">Meta</span>
               <span className="font-medium">{formatBRL(goal.target_amount)}</span>
             </div>
             {goal.deadline && (
-              <div className="flex justify-between text-xs text-neutral-400">
+              <div className="flex justify-between text-xs text-muted-foreground">
                 <span>Prazo</span>
                 <span>{formatDate(goal.deadline)}</span>
               </div>
@@ -124,7 +124,7 @@ export default function Goals() {
 
       {active.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Ativos</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Ativos</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {active.map(g => <GoalCard key={g.id} goal={g} />)}
           </div>
@@ -133,7 +133,7 @@ export default function Goals() {
 
       {inactive.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide mb-3">Concluídos / Pausados</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Concluídos / Pausados</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {inactive.map(g => <GoalCard key={g.id} goal={g} />)}
           </div>
@@ -141,7 +141,7 @@ export default function Goals() {
       )}
 
       {goals.length === 0 && (
-        <p className="text-neutral-400 text-sm">Nenhum objetivo cadastrado ainda.</p>
+        <p className="text-muted-foreground text-sm">Nenhum objetivo cadastrado ainda.</p>
       )}
     </div>
   )

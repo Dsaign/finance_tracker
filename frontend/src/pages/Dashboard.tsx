@@ -9,21 +9,24 @@ import { api } from '@/api'
 import { formatBRL, GOAL_TYPE_LABEL } from '@/lib/utils'
 import type { DashboardSummary, ByPeriodResponse, ByTagResponse, GoalProgress } from '@/types'
 
-const CHART_COLORS = ['#6366f1', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899']
+const CHART_COLORS = ['#33a95a', '#6395ee', '#65daf0', '#4582b5', '#199741', '#ec4899']
 
 function SummaryCards({ data }: { data: DashboardSummary }) {
   const cards = [
-    { label: 'Entradas', value: data.total_income, color: 'text-emerald-600' },
-    { label: 'Saídas',   value: data.total_expense, color: 'text-rose-600' },
-    { label: 'Saldo',    value: data.net,           color: parseFloat(data.net) >= 0 ? 'text-emerald-600' : 'text-rose-600' },
-    { label: 'Pagamentos fatura', value: data.total_payment, color: 'text-neutral-500' },
+    { label: 'Entradas', value: data.total_income, color: 'text-emerald-600 dark:text-emerald-400' },
+    { label: 'Saídas',   value: data.total_expense, color: 'text-rose-600 dark:text-rose-400' },
+    { label: 'Saldo',    value: data.net,
+      color: parseFloat(data.net) >= 0
+        ? 'text-emerald-600 dark:text-emerald-400'
+        : 'text-rose-600 dark:text-rose-400' },
+    { label: 'Pagamentos fatura', value: data.total_payment, color: 'text-muted-foreground' },
   ]
   return (
     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
       {cards.map(c => (
         <Card key={c.label}>
           <CardHeader className="pb-1">
-            <CardTitle className="text-xs font-medium text-neutral-500">{c.label}</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">{c.label}</CardTitle>
           </CardHeader>
           <CardContent>
             <p className={`text-xl font-bold ${c.color}`}>{formatBRL(c.value)}</p>
@@ -52,7 +55,7 @@ function PeriodChart({ data }: { data: ByPeriodResponse }) {
             <YAxis tick={{ fontSize: 12 }} tickFormatter={v => `R$${(v/1000).toFixed(0)}k`} />
             <Tooltip formatter={(v) => formatBRL(Number(v))} />
             <Legend />
-            <Bar dataKey="Entradas" fill="#10b981" radius={[3,3,0,0]} />
+            <Bar dataKey="Entradas" fill={CHART_COLORS[0]} radius={[3,3,0,0]} />
             <Bar dataKey="Saídas"   fill="#ef4444" radius={[3,3,0,0]} />
           </BarChart>
         </ResponsiveContainer>
@@ -71,7 +74,7 @@ function TagPieChart({ data }: { data: ByTagResponse }) {
       </CardHeader>
       <CardContent>
         {pieData.length === 0 ? (
-          <p className="text-sm text-neutral-400 py-8 text-center">Nenhuma transação com tag no período.</p>
+          <p className="text-sm text-muted-foreground py-8 text-center">Nenhuma transação com tag no período.</p>
         ) : (
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
@@ -105,15 +108,15 @@ function GoalsCards({ goals }: { goals: GoalProgress[] }) {
           <div key={g.id}>
             <div className="flex justify-between text-sm mb-1">
               <span className="font-medium">{g.name}</span>
-              <span className="text-neutral-500">{GOAL_TYPE_LABEL[g.goal_type]}</span>
+              <span className="text-muted-foreground">{GOAL_TYPE_LABEL[g.goal_type]}</span>
             </div>
-            <div className="flex justify-between text-xs text-neutral-500 mb-1">
+            <div className="flex justify-between text-xs text-muted-foreground mb-1">
               <span>{formatBRL(g.current_amount)} de {formatBRL(g.target_amount)}</span>
               <span>{g.progress_percent.toFixed(1)}%</span>
             </div>
-            <div className="h-2 bg-neutral-100 rounded-full overflow-hidden">
+            <div className="h-2 bg-muted rounded-full overflow-hidden">
               <div
-                className="h-full bg-indigo-500 rounded-full transition-all"
+                className="h-full bg-primary rounded-full transition-all"
                 style={{ width: `${Math.min(g.progress_percent, 100)}%` }}
               />
             </div>
