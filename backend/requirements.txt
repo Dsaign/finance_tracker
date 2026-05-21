@@ -1,0 +1,23 @@
+# Backend — Finance Tracker
+# Instale com: pip install -r requirements.txt
+
+# Web framework
+fastapi==0.115.0
+uvicorn[standard]==0.30.6
+
+# ORM e banco
+sqlalchemy==2.0.36
+alembic==1.13.3
+pymysql==1.1.1
+cryptography==43.0.3       # necessário para pymysql com SSL
+
+# Validação
+pydantic==2.9.2
+pydantic-settings==2.5.2   # leitura do .env via BaseSettings
+
+# Parser OFX (Bradesco)
+ofxparse==0.21
+
+# Utilitários
+python-dotenv==1.0.1
+python-multipart==0.0.12   # upload de arquivos no FastAPI
