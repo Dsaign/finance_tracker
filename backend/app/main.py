@@ -6,6 +6,7 @@ from .routers.institutions import router as institutions_router
 from .routers.accounts import router as accounts_router
 from .routers.imports import router as imports_router
 from .routers.transactions import router as transactions_router
+from .routers.tags import router as tags_router
 
 app = FastAPI(
     title="Finance Tracker API",
@@ -28,6 +29,7 @@ app.include_router(institutions_router, prefix=PREFIX)
 app.include_router(accounts_router, prefix=PREFIX)
 app.include_router(imports_router, prefix=PREFIX)
 app.include_router(transactions_router, prefix=PREFIX)
+app.include_router(tags_router, prefix=PREFIX)
 
 
 @app.get("/healthz")
