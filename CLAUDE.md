@@ -50,7 +50,6 @@ Nome do produto: **Mirante**.
 
 ## Próximos passos
 
-- [ ] Criar/editar transações manualmente (modal de formulário)
 - [ ] Criar/editar objetivos via UI (modal de formulário)
 
 ## Ambiente de desenvolvimento
