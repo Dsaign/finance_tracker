@@ -10,13 +10,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { useTheme } from '@/lib/theme'
 
 function MiranteLogo() {
-  // viewBox: 122 × 42 — baseline at y=37, cap-top ≈ y=15, triangle above that
-  // M (Quicksand 500) advance ≈ 27 px at size 30 → centre-x ≈ 13.5
-  // Triangle: base y=5, apex y=13 (2 px gap from cap-top), base-width=10
   return (
     <svg
-      viewBox="0 0 122 42"
-      className="h-8 select-none"
+      viewBox="0 0 130 40"
+      className="h-9 select-none"
       aria-label="Mirante"
       xmlns="http://www.w3.org/2000/svg"
     >
