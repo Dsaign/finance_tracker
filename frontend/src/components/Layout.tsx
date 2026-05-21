@@ -9,6 +9,41 @@ import { Switch } from '@/components/ui/switch'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useTheme } from '@/lib/theme'
 
+function MiranteLogo() {
+  // viewBox: 122 × 42 — baseline at y=37, cap-top ≈ y=15, triangle above that
+  // M (Quicksand 500) advance ≈ 27 px at size 30 → centre-x ≈ 13.5
+  // Triangle: base y=5, apex y=13 (2 px gap from cap-top), base-width=10
+  return (
+    <svg
+      viewBox="0 0 122 42"
+      className="h-8 select-none"
+      aria-label="Mirante"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* inverted triangle — sits in the V above the M */}
+      <polygon
+        points="7.5,10 17.8,10 12.5,18"
+        fill="var(--sidebar-primary)"
+      />
+      <text
+        x="0" y="37"
+        fontFamily="'Quicksand', sans-serif"
+        fontSize={30}
+        fontWeight={500}
+        fill="var(--sidebar-primary)"
+      >M</text>
+      <text
+        x="27" y="37"
+        fontFamily="'Quicksand', sans-serif"
+        fontSize={30}
+        fontWeight={400}
+        letterSpacing={1.4}
+        fill="var(--sidebar-foreground)"
+      >irante</text>
+    </svg>
+  )
+}
+
 const NAV = [
   { to: '/',             icon: LayoutDashboard, label: 'Dashboard'     },
   { to: '/transactions', icon: ArrowLeftRight,  label: 'Extrato'       },
@@ -27,7 +62,7 @@ export default function Layout() {
       {/* Sidebar */}
       <aside className="w-56 shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border text-sidebar-foreground">
         <div className="px-6 py-5 border-b border-sidebar-border">
-          <span className="text-lg font-bold tracking-tight text-sidebar-primary">Finance Tracker</span>
+          <MiranteLogo />
         </div>
 
         <nav className="flex-1 py-4 space-y-1 px-3">
