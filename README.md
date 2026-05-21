@@ -209,4 +209,4 @@ Para adicionar uma nova instituição:
 - [x] Gestão de objetivos e dívidas
 - [x] Gestão de tags e regras de categorização
 - [x] Configurações (CRUD de instituições, contas e grupos)
-- [ ] Criação e edição manual de transações
+- [x] Criação e edição manual de transações
