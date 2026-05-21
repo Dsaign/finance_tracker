@@ -45,13 +45,12 @@ Nome do produto: **Mirante**.
   - `Import` — seleção de conta, drag-and-drop de CSV/OFX, resultado com contadores de inserção/duplicatas
   - `Goals` — listagem de objetivos e dívidas com barra de progresso
   - `Tags` — CRUD de tags (cor, nome) e regras de categorização (keyword)
-- **Página placeholder:**
-  - `Settings` — ainda sem implementação ("em breve")
+- **Páginas conectadas ao backend (todas):**
+  - `Settings` — CRUD de instituições, grupos de contas e contas com dialogs de criação/edição
 
 ## Próximos passos
 
-- [ ] `Settings` — CRUD de instituições, contas e grupos de contas via UI
-- [ ] Criar/editar transações manualmente (modal de criação, edição inline)
+- [ ] Criar/editar transações manualmente (modal de formulário)
 - [ ] Criar/editar objetivos via UI (modal de formulário)
 
 ## Ambiente de desenvolvimento
