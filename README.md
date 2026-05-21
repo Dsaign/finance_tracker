@@ -188,17 +188,25 @@ Para adicionar uma nova instituição:
 
 ## Progresso do desenvolvimento
 
-- [x] Modelagem do banco de dados (ERD)
-- [x] Models SQLAlchemy
-- [x] Migrations Alembic
+### Backend
+- [x] Modelagem do banco de dados
+- [x] Models SQLAlchemy + Migrations Alembic
 - [x] Parsers de importação (Nubank CSV, Bradesco OFX)
-- [ ] Estrutura FastAPI (routers, schemas, services)
-- [ ] Endpoints de contas e instituições
-- [ ] Endpoints de transações (CRUD + busca)
-- [ ] Endpoints de importação
-- [ ] Endpoints de tags e regras de categorização
-- [ ] Endpoints de objetivos e dívidas
-- [ ] Frontend React — estrutura base
-- [ ] Frontend — tela de extrato com busca
-- [ ] Frontend — dashboard com gráficos
-- [ ] Frontend — gestão de objetivos e dívidas
+- [x] Endpoints de instituições e contas
+- [x] Endpoints de transações (listagem com filtros, CRUD)
+- [x] Endpoint de importação de extrato (upload, parse, deduplicação)
+- [x] Endpoints de tags e regras de categorização
+- [x] Endpoints de objetivos e dívidas
+- [x] Endpoints de dashboard (resumo, por período, por tag, top merchants)
+
+### Frontend
+- [x] Estrutura React + TypeScript + Vite + Tailwind v4 + shadcn/ui
+- [x] Tema Mirante (logo, favicon, dark mode com persistência)
+- [x] Cliente HTTP integrado ao backend (`/api/v1`)
+- [x] Importação de extrato (drag-and-drop, CSV/OFX, resultado com contadores)
+- [x] Extrato com busca por descrição, filtro por tipo e paginação
+- [x] Dashboard com gráficos (Recharts)
+- [x] Gestão de objetivos e dívidas
+- [x] Gestão de tags e regras de categorização
+- [ ] Configurações (CRUD de instituições, contas e grupos)
+- [ ] Criação e edição manual de transações

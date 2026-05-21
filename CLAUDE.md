@@ -7,70 +7,67 @@ para continuar o desenvolvimento via Claude Code.
 
 Aplicação pessoal de controle financeiro com importação de extratos bancários,
 categorização por tags, visualização de gastos e gestão de objetivos e dívidas.
+Nome do produto: **Mirante**.
 
 ## Stack definida
 
 - **Backend:** FastAPI + SQLAlchemy 2.x + Alembic + Python 3.11+
-- **Frontend:** React + TypeScript + Vite + Recharts (a iniciar)
+- **Frontend:** React + TypeScript + Vite + Tailwind v4 + shadcn/ui + Recharts
 - **Banco de dados:** MySQL 8.0 com utf8mb4
 - **Importação:** Parsers por instituição (Nubank CSV, Bradesco OFX)
 
-## O que já foi desenvolvido
+## Estado atual — o que está pronto
 
-### Models SQLAlchemy (`app/models/`)
-Todos os models estão prontos e validados:
-- `institution` — bancos/fintechs com campo `parser_type`
-- `account_group` — agrupamento de contas (ex: PJ, PF)
-- `account` — conta corrente, poupança, cartão de crédito, investimento
-- `import_file` — registro de importações com deduplicação por hash MD5
-- `transaction` — transação com `flow` enum (income/expense/payment/transfer) e `is_manual`
-- `tag` + `transaction_tag` — categorização many-to-many pesquisável
-- `category_rule` + `category_rule_tag` — regras de auto-categorização por keyword
-- `goal` + `goal_account` — objetivos financeiros multi-conta
-- `debt` — dívidas com credor, juros, parcelas (vinculada a goal)
+### Backend (`backend/app/`) — completo
+- `models/` — todos os models SQLAlchemy validados
+- `parsers/` — Nubank CSV e Bradesco OFX
+- `schemas/` — Pydantic schemas para todas as entidades
+- `routers/institutions.py` — CRUD de instituições
+- `routers/accounts.py` — CRUD de contas e grupos de contas
+- `routers/transactions.py` — listagem com filtros, criação, atualização, exclusão
+- `routers/imports.py` — upload, parse, deduplicação e persistência
+- `routers/tags.py` — CRUD de tags e regras de categorização
+- `routers/goals.py` — CRUD de objetivos e dívidas
+- `routers/dashboard.py` — agregações por período, por tag, top merchants, progresso de goals
+- `main.py` — FastAPI com CORS, todas as rotas em `/api/v1`
+- Migrations Alembic com `utf8mb4_unicode_ci` em todas as tabelas
 
-### Migrations Alembic (`migrations/`)
-- Migration inicial `4c265bcc3438_initial_schema.py` pronta
-- `env.py` configurado para ler `DATABASE_URL` do `.env`
-- Todas as tabelas com `utf8mb4_unicode_ci` para suporte Unicode completo
-- Testado upgrade + downgrade completo
+### Frontend (`frontend/src/`) — quase completo
+- **Infraestrutura:** Vite proxy `/api` → `http://localhost:8000`, cliente Axios (`api/client.ts`)
+- **API client:** `api/index.ts` — todas as chamadas mapeadas para os endpoints do backend
+- **Tipos:** `types/index.ts` — interfaces TypeScript alinhadas com os schemas Pydantic
+- **Tema Mirante:** logo SVG (Quicksand), favicon com triângulo + M, dark mode com persistência
+- **Layout:** sidebar com navegação, tokens de cor semânticos, Tailwind v4 canônico
+- **Componentes UI:** shadcn/ui completos com named imports e `type` imports
+- **Páginas conectadas ao backend:**
+  - `Dashboard` — gráficos de período e por tag (Recharts), resumo financeiro, progresso de goals
+  - `Transactions` — extrato com busca, filtro por tipo, paginação, exclusão de transação
+  - `Import` — seleção de conta, drag-and-drop de CSV/OFX, resultado com contadores de inserção/duplicatas
+  - `Goals` — listagem de objetivos e dívidas com barra de progresso
+  - `Tags` — CRUD de tags (cor, nome) e regras de categorização (keyword)
+- **Página placeholder:**
+  - `Settings` — ainda sem implementação ("em breve")
 
-### Parsers de importação (`app/parsers/`)
-- `base.py` — interface `BaseParser` + dataclass `ParsedTransaction`
-- `nubank.py` — parser CSV (date, title, amount)
-  - Detecta: expense, payment (fatura), income (estorno), juros de rotativo
-  - Extrai parcelamento: "Parcela 2/10" → campos `installment_current/total`
-  - Testado contra CSV real
-- `bradesco.py` — parser OFX via `ofxparse`
-  - Mapeia tipos OFX (CREDIT, DEBIT, ATM...) para TransactionFlow
-- `__init__.py` — `PARSER_REGISTRY` + `get_parser("nubank_csv")`
+## Próximos passos
 
-## O que falta desenvolver (próximos passos)
+- [ ] `Settings` — CRUD de instituições, contas e grupos de contas via UI
+- [ ] Criar/editar transações manualmente (modal de criação, edição inline)
+- [ ] Criar/editar objetivos via UI (modal de formulário)
 
-### Backend (prioridade atual)
-- [x] `app/main.py` — entrypoint FastAPI com CORS e inclusão de routers
-- [x] `app/config.py` — Settings via pydantic-settings (lê `.env`)
-- [x] `app/database.py` — engine, SessionLocal, get_db dependency
-- [x] `app/schemas/institution.py` — Pydantic schemas de instituições
-- [x] `app/schemas/account.py` — Pydantic schemas de contas e grupos
-- [x] `app/routers/institutions.py` — CRUD de instituições
-- [x] `app/routers/accounts.py` — CRUD de contas e grupos de contas
-- [ ] `app/routers/transactions.py` — CRUD + busca com filtros
-- [ ] `app/routers/imports.py` — upload e processamento de extrato
-- [ ] `app/routers/tags.py` — CRUD de tags e regras de categorização
-- [ ] `app/routers/goals.py` — CRUD de objetivos e dívidas
-- [ ] `app/routers/dashboard.py` — agregações para gráficos
+## Ambiente de desenvolvimento
 
-### Ambiente de desenvolvimento
-- `backend/.venv/` — virtualenv Python com todas as dependências instaladas
-- Ativar: `source backend/.venv/bin/activate`
-- Rodar: `uvicorn app.main:app --reload` (dentro de `backend/`)
+```bash
+# Backend
+cd backend
+source .venv/bin/activate
+uvicorn app.main:app --reload          # http://localhost:8000
+# Docs interativas: http://localhost:8000/docs
 
-### Frontend (após backend)
-- [ ] Estrutura React + TypeScript + Vite
-- [ ] Tela de extrato com busca e filtros
-- [ ] Dashboard com gráficos (Recharts)
-- [ ] Gestão de objetivos e dívidas
+# Frontend
+cd frontend
+npm run dev                            # http://localhost:5173
+# Proxy automático: /api/* → http://localhost:8000
+```
 
 ## Decisões de design importantes
 
@@ -82,13 +79,13 @@ O enum `flow` na tabela `transaction` é crítico para não distorcer relatório
 
 ### Deduplicação
 Dois níveis:
-1. `import_file.file_hash` — impede reimportar o mesmo arquivo
-2. `transaction.hash` — SHA256 de (account_id + date + description + amount) — impede duplicata mesmo entre arquivos diferentes
+1. `import_file.file_hash` (MD5) — impede reimportar o mesmo arquivo
+2. `transaction.hash` (SHA256 de account_id + date + description + amount) — impede duplicata entre arquivos
 
 ### Categorização
 - Tags são entidades independentes reutilizadas entre transações
 - `category_rule` aplica tags automaticamente na importação por keyword match
-- Usuário pode editar tags de qualquer transação manualmente depois
+- Usuário pode editar tags de qualquer transação manualmente
 
 ### Dívidas
 - `debt` é sempre vinculada a um `goal` do tipo `debt_payoff`
@@ -97,28 +94,13 @@ Dois níveis:
 
 ## Convenções do projeto
 
-- Todos os valores monetários usam `Decimal` (nunca `float`)
-- Datas usam `datetime.date` (sem timezone) — timezone só em timestamps de auditoria
-- Enums são `str` enum para serializar bem no JSON e no MySQL
+- Valores monetários: `Decimal` (backend), `string` no JSON, `parseFloat` no frontend quando necessário
+- Datas: `datetime.date` sem timezone — timezone só em timestamps de auditoria
+- Enums: `str` enum para serializar bem no JSON e no MySQL
 - `TimestampMixin` fornece `created_at` / `updated_at` automáticos
+- Frontend: named imports em todos os arquivos (sem `import *`)
+- Frontend: tipos importados com `import { type X }` (verbatimModuleSyntax)
 - Novos parsers: herdar `BaseParser`, definir `PARSER_TYPE`, registrar em `PARSER_REGISTRY`
-
-## Configuração do ambiente
-
-```bash
-# Instalar dependências
-pip install -r requirements.txt
-
-# Configurar banco
-cp .env.example .env
-# editar DATABASE_URL no .env
-
-# Rodar migrations
-alembic upgrade head
-
-# Iniciar servidor de desenvolvimento
-uvicorn app.main:app --reload
-```
 
 ## Variáveis de ambiente necessárias
 
