@@ -208,5 +208,5 @@ Para adicionar uma nova instituição:
 - [x] Dashboard com gráficos (Recharts)
 - [x] Gestão de objetivos e dívidas
 - [x] Gestão de tags e regras de categorização
-- [ ] Configurações (CRUD de instituições, contas e grupos)
+- [x] Configurações (CRUD de instituições, contas e grupos)
 - [ ] Criação e edição manual de transações
