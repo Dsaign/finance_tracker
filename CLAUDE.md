@@ -43,6 +43,7 @@ Nome do produto: **Mirante**.
   - `CurrencyInput` — input de valor monetário com máscara automática (0.000,00), aceita `prefix`
   - `EmptyState` — estado vazio padronizado com ilustração SVG e mensagem/ação
   - `InstitutionLogo` / `InstitutionName` — ícone da instituição derivado do slug (`/assets/logos/<slug>.svg`), colorido com `text-primary` via CSS mask; fallback com inicial; `InstitutionName` renderiza logo + nome inline
+  - `UnderlineTabs` — conjunto de 4 sub-componentes (`UnderlineTabs`, `UnderlineTabsList`, `UnderlineTabsTrigger`, `UnderlineTabsContent`) para abas com indicador deslizante animado; suporta modo controlado (`value`/`onValueChange`) e não controlado (`defaultValue`)
 - **Páginas conectadas ao backend:**
   - `Dashboard` — gráficos de período e por tag (Recharts), resumo financeiro, progresso de goals
   - `Transactions` — abas por conta (com logo da instituição), tabela com altura dinâmica (ResizeObserver), coluna Conta condicional, totais Entradas/Saídas + Saldo no rodapé, busca, filtro por tipo, paginação com setas, criação/edição de transações via dialog (com CurrencyInput), importação de extrato via dialog (drag-and-drop CSV/OFX); descrições longas truncadas por CSS com tooltip

@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import {
@@ -15,7 +15,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { api } from '@/api'
 import { InstitutionName } from '@/components/ui/institution-logo'
-import { cn, ACCOUNT_TYPE_LABEL } from '@/lib/utils'
+import { UnderlineTabs, UnderlineTabsList, UnderlineTabsTrigger, UnderlineTabsContent } from '@/components/ui/underline-tabs'
+import { ACCOUNT_TYPE_LABEL } from '@/lib/utils'
 import type { Account, AccountGroup, AccountType, Institution } from '@/types'
 
 const PARSERS = [
@@ -60,19 +61,6 @@ export default function Settings() {
   const [acctOpen, setAcctOpen] = useState(false)
   const [editAcct, setEditAcct] = useState<Account | null>(null)
   const [acctForm, setAcctForm] = useState(ACCT_EMPTY)
-
-  // Tab indicator
-  type TabKey = 'institutions' | 'groups' | 'accounts'
-  const TAB_LABELS: Record<TabKey, string> = { institutions: 'Instituições', groups: 'Grupos de contas', accounts: 'Contas' }
-  const [activeTab, setActiveTab] = useState<TabKey>('institutions')
-  const tabsContainerRef = useRef<HTMLDivElement>(null)
-  const tabButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
-  const [indicator, setIndicator] = useState({ left: 0, width: 0 })
-
-  useLayoutEffect(() => {
-    const el = tabButtonRefs.current.get(activeTab)
-    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
-  }, [activeTab])
 
   function loadAll() {
     return Promise.all([
@@ -225,34 +213,15 @@ export default function Settings() {
     <div className="p-8 space-y-6">
       <h1 className="text-2xl font-bold">Configurações</h1>
 
-      <div>
-        {/* ── Barra de abas ────────────────────────────────────────────────── */}
-        <div ref={tabsContainerRef} className="relative flex items-end border-b border-border">
-          {(Object.keys(TAB_LABELS) as TabKey[]).map(tab => (
-            <button
-              key={tab}
-              ref={el => { if (el) tabButtonRefs.current.set(tab, el) }}
-              onClick={() => setActiveTab(tab)}
-              className={cn(
-                'px-4 py-2 text-sm transition-colors whitespace-nowrap',
-                activeTab === tab ? 'text-foreground font-medium' : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {TAB_LABELS[tab]}
-            </button>
-          ))}
-          <span
-            className="absolute bottom-0 h-0.5 bg-primary pointer-events-none"
-            style={{
-              left: indicator.left,
-              width: indicator.width,
-              transition: 'left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)',
-            }}
-          />
-        </div>
+      <UnderlineTabs defaultValue="institutions">
+        <UnderlineTabsList>
+          <UnderlineTabsTrigger value="institutions">Instituições</UnderlineTabsTrigger>
+          <UnderlineTabsTrigger value="groups">Grupos de contas</UnderlineTabsTrigger>
+          <UnderlineTabsTrigger value="accounts">Contas</UnderlineTabsTrigger>
+        </UnderlineTabsList>
 
         {/* ── Instituições ─────────────────────────────────────────────────── */}
-        {activeTab === 'institutions' && <div className="mt-6 space-y-4">
+        <UnderlineTabsContent value="institutions" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">{institutions.length} instituição(ões) cadastrada(s)</p>
             <Button size="sm" onClick={openInstCreate}><Plus size={14} /> Nova instituição</Button>
@@ -291,10 +260,10 @@ export default function Settings() {
               </table>
             </CardContent>
           </Card>
-        </div>}
+        </UnderlineTabsContent>
 
         {/* ── Grupos de contas ─────────────────────────────────────────────── */}
-        {activeTab === 'groups' && <div className="mt-6 space-y-4">
+        <UnderlineTabsContent value="groups" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">{groups.length} grupo(s) cadastrado(s)</p>
             <Button size="sm" onClick={openGroupCreate}><Plus size={14} /> Novo grupo</Button>
@@ -329,10 +298,10 @@ export default function Settings() {
               </table>
             </CardContent>
           </Card>
-        </div>}
+        </UnderlineTabsContent>
 
         {/* ── Contas ───────────────────────────────────────────────────────── */}
-        {activeTab === 'accounts' && <div className="mt-6 space-y-4">
+        <UnderlineTabsContent value="accounts" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">{accounts.length} conta(s) cadastrada(s)</p>
             <Button size="sm" onClick={openAcctCreate}><Plus size={14} /> Nova conta</Button>
@@ -377,8 +346,8 @@ export default function Settings() {
               </table>
             </CardContent>
           </Card>
-        </div>}
-      </div>
+        </UnderlineTabsContent>
+      </UnderlineTabs>
 
       {/* ── Dialog: Instituição ───────────────────────────────────────────────── */}
       <Dialog open={instOpen} onOpenChange={setInstOpen}>

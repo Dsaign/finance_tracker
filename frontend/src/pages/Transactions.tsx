@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Trash2, Plus, Pencil, ChevronLeft, ChevronRight, Download, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -11,7 +11,8 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/api'
 import { CurrencyInput } from '@/components/ui/currency-input'
 import { InstitutionLogo, InstitutionName } from '@/components/ui/institution-logo'
-import { cn, formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
+import { UnderlineTabs, UnderlineTabsList, UnderlineTabsTrigger } from '@/components/ui/underline-tabs'
+import { formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
 import type { Account, Tag, Transaction, TransactionFlow, TransactionListResponse, ImportResult } from '@/types'
 
 const FLOW_COLOR: Record<string, string> = {
@@ -64,11 +65,6 @@ export default function Transactions() {
   const [containerH, setContainerH] = useState(0)
   const tableRef = useRef<HTMLDivElement>(null)
 
-  // Tab indicator
-  const tabsContainerRef = useRef<HTMLDivElement>(null)
-  const tabButtonRefs = useRef<Map<string, HTMLButtonElement>>(new Map())
-  const [indicator, setIndicator] = useState<{ left: number; width: number } | null>(null)
-
   // ROW_MIN_H = altura mínima de linha para evitar oscilação do layout durante o carregamento
   // HEADER_H = altura do header da tabela, para calcular quantas linhas cabem no container sem scroll
   const ROW_MIN_H = 30
@@ -105,12 +101,6 @@ export default function Transactions() {
 
   useEffect(() => { setPage(1) }, [search, flow, selectedAccount, pageSize])
   useEffect(() => { load() }, [load])
-
-  // Posiciona o indicator da aba ativa
-  useLayoutEffect(() => {
-    const el = tabButtonRefs.current.get(selectedAccount)
-    if (el) setIndicator({ left: el.offsetLeft, width: el.offsetWidth })
-  }, [selectedAccount, accounts])
 
   useEffect(() => {
     api.accounts.list(true).then(setAccounts).catch(() => {})
@@ -245,47 +235,17 @@ export default function Transactions() {
       </div>
 
       {/* Abas de conta */}
-      <div ref={tabsContainerRef} className="relative flex items-end border-b border-border shrink-0">
-        <button
-          ref={el => { if (el) tabButtonRefs.current.set('all', el) }}
-          onClick={() => setSelectedAccount('all')}
-          className={cn(
-            'px-4 py-2 text-sm transition-colors whitespace-nowrap',
-            selectedAccount === 'all'
-              ? 'text-foreground font-medium'
-              : 'text-muted-foreground hover:text-foreground'
-          )}
-        >
-          Todas as contas
-        </button>
-        {accounts.map(a => (
-          <button
-            key={a.id}
-            ref={el => { if (el) tabButtonRefs.current.set(String(a.id), el) }}
-            onClick={() => setSelectedAccount(String(a.id))}
-            className={cn(
-              'px-4 py-2 text-sm transition-colors whitespace-nowrap inline-flex items-center gap-1.5',
-              selectedAccount === String(a.id)
-                ? 'text-foreground font-medium'
-                : 'text-muted-foreground hover:text-foreground'
-            )}
-          >
-            <InstitutionLogo slug={a.institution.slug} name={a.institution.name} size={14} />
-            {a.name}
-          </button>
-        ))}
-        {/* Indicator deslizante */}
-        {indicator && (
-          <span
-            className="absolute bottom-0 h-0.5 bg-primary pointer-events-none"
-            style={{
-              left: indicator.left,
-              width: indicator.width,
-              transition: 'left 250ms cubic-bezier(0.4,0,0.2,1), width 250ms cubic-bezier(0.4,0,0.2,1)',
-            }}
-          />
-        )}
-      </div>
+      <UnderlineTabs value={selectedAccount} onValueChange={setSelectedAccount} className="shrink-0">
+        <UnderlineTabsList>
+          <UnderlineTabsTrigger value="all">Todas as contas</UnderlineTabsTrigger>
+          {accounts.map(a => (
+            <UnderlineTabsTrigger key={a.id} value={String(a.id)}>
+              <InstitutionLogo slug={a.institution.slug} name={a.institution.name} size={14} />
+              {a.name}
+            </UnderlineTabsTrigger>
+          ))}
+        </UnderlineTabsList>
+      </UnderlineTabs>
 
       {/* Filtros */}
       <div className="flex gap-3 shrink-0">
