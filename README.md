@@ -164,7 +164,8 @@ Cada instituição tem seu próprio parser em `app/parsers/`. A interface é sem
 
 | Instituição | Formato | Parser |
 |---|---|---|
-| Nubank | CSV (`date, title, amount`) | `nubank.py` |
+| Nubank Cartão | CSV (`date, title, amount`) | `nubank.py` |
+| Nubank Conta Corrente | CSV (`Data, Valor, Identificador, Descrição`) | `nubank.py` |
 | Bradesco | OFX | `bradesco.py` |
 
 Para adicionar uma nova instituição:
@@ -189,7 +190,7 @@ Para adicionar uma nova instituição:
 | `account_group` | Agrupamento de contas (ex: PJ, PF) |
 | `account` | Conta de uma instituição (corrente, poupança, cartão) |
 | `import_file` | Registro de cada arquivo importado (deduplicação por hash) |
-| `transaction` | Transação individual (importada ou manual) |
+| `transaction` | Transação individual (importada ou manual); campo `external_id` armazena UUID do extrato original |
 | `tag` | Tag de categorização pesquisável |
 | `transaction_tag` | Associação many-to-many transação ↔ tag |
 | `category_rule` | Regra de categorização automática por keyword |

@@ -404,6 +404,7 @@ function GoalDialog({
                     <Label htmlFor="debt-original">Valor original <span className="text-primary">*</span></Label>
                     <CurrencyInput
                       id="debt-original"
+                      prefix="R$"
                       value={debt.original_amount}
                       onChange={v => setD('original_amount', v)}
                       required={isDebt && !isEdit}
@@ -415,6 +416,7 @@ function GoalDialog({
                   <Label htmlFor="debt-balance">Saldo atual <span className="text-primary">*</span></Label>
                   <CurrencyInput
                     id="debt-balance"
+                    prefix="R$"
                     value={debt.current_balance}
                     onChange={v => setD('current_balance', v)}
                     required={isDebt}

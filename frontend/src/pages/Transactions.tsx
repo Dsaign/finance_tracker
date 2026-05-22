@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/api'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { cn, formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
 import type { Account, Tag, Transaction, TransactionFlow, TransactionListResponse, ImportResult } from '@/types'
 
@@ -303,13 +304,18 @@ export default function Transactions() {
                     <th className="px-4 py-1.5" />
                   </tr>
                 </thead>
-                <tbody>
+                <tbody className="text-sm">
                   {data?.items.map(tx => (
                     <tr key={tx.id} style={rowH ? { height: rowH } : undefined} className="border-b border-border/40 hover:bg-accent-foreground/5 transition-colors">
                       <td className="px-4 py-0.5 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
-                      <td className="px-4 py-0.5 font-normal max-w-xs truncate">{tx.description}</td>
+                      <td
+                        className="px-4 py-0.5 font-normal max-w-xs overflow-hidden text-ellipsis whitespace-nowrap"
+                        title={tx.description}
+                      >
+                        {tx.description}
+                      </td>
                       {showAccountCol && (
-                        <td className="px-4 py-0.5 text-sm text-muted-foreground whitespace-nowrap">
+                        <td className="px-4 py-0.5 text-muted-foreground whitespace-nowrap">
                           {accountMap.get(tx.account_id)?.name ?? '—'}
                         </td>
                       )}
@@ -390,22 +396,31 @@ export default function Transactions() {
             <ChevronRight size={15} />
           </Button>
         </div>
-        {data && (
-          <div className="flex items-center justify-end gap-4">
-            <div className="flex flex-col items-end">
-              <span className="text-xs text-muted-foreground">Entradas</span>
-              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums">
-                +{formatBRL(data.total_income)}
-              </span>
+        {data && (() => {
+          const balance = parseFloat(data.total_income) - parseFloat(data.total_expense)
+          return (
+            <div className="flex items-center justify-end gap-4">
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-muted-foreground">Entradas</span>
+                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums">
+                  +{formatBRL(data.total_income)}
+                </span>
+              </div>
+              <div className="flex flex-col items-end">
+                <span className="text-xs text-muted-foreground">Saídas</span>
+                <span className="text-sm font-medium text-rose-600 dark:text-rose-400 tabular-nums">
+                  -{formatBRL(data.total_expense)}
+                </span>
+              </div>
+              <div className="flex flex-col items-end pl-4 border-l border-border">
+                <span className="text-xs text-muted-foreground">Saldo</span>
+                <span className={`text-sm font-medium tabular-nums ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                  {balance >= 0 ? '+' : ''}{formatBRL(String(Math.abs(balance)))}
+                </span>
+              </div>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-xs text-muted-foreground">Saídas</span>
-              <span className="text-sm font-medium text-rose-600 dark:text-rose-400 tabular-nums">
-                -{formatBRL(data.total_expense)}
-              </span>
-            </div>
-          </div>
-        )}
+          )
+        })()}
       </div>
 
       {/* ── Dialog: importar extrato ────────────────────────────────────────── */}
@@ -503,14 +518,12 @@ export default function Transactions() {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label>Valor (R$)</Label>
-                <Input
-                  type="number"
-                  min="0.01"
-                  step="0.01"
+                <Label>Valor</Label>
+                <CurrencyInput
+                  prefix="R$"
                   placeholder="0,00"
                   value={txForm.amount}
-                  onChange={e => setTxForm(f => ({ ...f, amount: e.target.value }))}
+                  onChange={v => setTxForm(f => ({ ...f, amount: v }))}
                 />
               </div>
             </div>
