@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
 import { Trash2, Plus, Pencil } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
@@ -50,9 +50,30 @@ export default function Transactions() {
   const [txOpen,  setTxOpen]  = useState(false)
   const [editTx,  setEditTx]  = useState<Transaction | null>(null)
   const [txForm,  setTxForm]  = useState(TX_EMPTY)
-  const [saving,  setSaving]  = useState(false)
+  const [saving,   setSaving]   = useState(false)
+  const [containerH, setContainerH] = useState(0)
+  const tableRef = useRef<HTMLDivElement>(null)
 
-  const PAGE_SIZE = 50
+  // ROW_MIN_H = py-1.5 (12px) + h-7 botões (28px) = 40px real
+  // HEADER_H  = py-2 (16px) + text-xs (16px) ≈ 35px
+  const ROW_MIN_H = 40
+  const HEADER_H  = 35
+  // pageSize e rowH derivados deterministicamente do containerH — sem oscilação
+  const pageSize = containerH > 0
+    ? Math.max(5, Math.floor((containerH - HEADER_H) / ROW_MIN_H))
+    : 20
+  const rowH = containerH > 0
+    ? Math.floor((containerH - HEADER_H) / pageSize)
+    : undefined
+
+  useEffect(() => {
+    const el = tableRef.current
+    if (!el) return
+    setContainerH(el.clientHeight)
+    const ro = new ResizeObserver(() => setContainerH(el.clientHeight))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [])
 
   const load = useCallback(() => {
     setLoading(true)
@@ -60,12 +81,12 @@ export default function Transactions() {
       search: search || undefined,
       flow: flow !== 'all' ? flow : undefined,
       page,
-      page_size: PAGE_SIZE,
+      page_size: pageSize,
     }).then(setData).catch(e => toast.error(e.message))
       .finally(() => setLoading(false))
-  }, [search, flow, page])
+  }, [search, flow, page, pageSize])
 
-  useEffect(() => { setPage(1) }, [search, flow])
+  useEffect(() => { setPage(1) }, [search, flow, pageSize])
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
@@ -150,11 +171,12 @@ export default function Transactions() {
       .catch(e => toast.error(e.message))
   }
 
-  const totalPages = data ? Math.ceil(data.total / PAGE_SIZE) : 1
+  const totalPages = data ? Math.ceil(data.total / pageSize) : 1
 
   return (
-    <div className="p-8 space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="flex flex-col h-full p-6 gap-4">
+      {/* Cabeçalho */}
+      <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold">Extrato</h1>
         <Button size="sm" onClick={openCreate}>
           <Plus size={14} /> Nova transação
@@ -162,7 +184,7 @@ export default function Transactions() {
       </div>
 
       {/* Filtros */}
-      <div className="flex gap-3">
+      <div className="flex gap-3 shrink-0">
         <Input
           placeholder="Buscar descrição..."
           value={search}
@@ -188,103 +210,103 @@ export default function Transactions() {
       </div>
 
       {/* Tabela */}
-      <Card>
-        <CardContent className="p-0">
-          {loading ? (
-            <div className="p-6 space-y-3">
-              {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-10" />)}
-            </div>
-          ) : (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wide">
-                  <th className="px-4 py-3 text-left font-medium">Data</th>
-                  <th className="px-4 py-3 text-left font-medium">Descrição</th>
-                  <th className="px-4 py-3 text-left font-medium">Tags</th>
-                  <th className="px-4 py-3 text-left font-medium">Tipo</th>
-                  <th className="px-4 py-3 text-right font-medium">Valor</th>
-                  <th className="px-4 py-3" />
-                </tr>
-              </thead>
-              <tbody>
-                {data?.items.map(tx => (
-                  <tr key={tx.id} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
-                    <td className="px-4 py-3 font-medium max-w-xs truncate">{tx.description}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-wrap gap-1">
-                        {tx.tags.map(tag => (
-                          <span
-                            key={tag.id}
-                            className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
-                            style={{ backgroundColor: tag.color ?? '#6b7280' }}
+      <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <CardContent className="p-0 flex flex-col flex-1 min-h-0">
+          <div ref={tableRef} className="flex-1 min-h-0 overflow-hidden">
+            {loading ? (
+              <div className="p-6 space-y-2">
+                {[...Array(8)].map((_, i) => <Skeleton key={i} className="h-8" />)}
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wide">
+                    <th className="px-4 py-2 text-left font-medium">Data</th>
+                    <th className="px-4 py-2 text-left font-medium">Descrição</th>
+                    <th className="px-4 py-2 text-left font-medium">Tags</th>
+                    <th className="px-4 py-2 text-left font-medium">Tipo</th>
+                    <th className="px-4 py-2 text-right font-medium">Valor</th>
+                    <th className="px-4 py-2" />
+                  </tr>
+                </thead>
+                <tbody>
+                  {data?.items.map(tx => (
+                    <tr key={tx.id} style={rowH ? { height: rowH } : undefined} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
+                      <td className="px-4 py-1.5 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
+                      <td className="px-4 py-1.5 font-medium max-w-xs truncate">{tx.description}</td>
+                      <td className="px-4 py-1.5">
+                        <div className="flex flex-wrap gap-1">
+                          {tx.tags.map(tag => (
+                            <span
+                              key={tag.id}
+                              className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                              style={{ backgroundColor: tag.color ?? '#6b7280' }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      </td>
+                      <td className="px-4 py-1.5">
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${FLOW_COLOR[tx.flow]}`}>
+                          {FLOW_LABEL[tx.flow]}
+                        </span>
+                      </td>
+                      <td className={`px-4 py-1.5 text-right font-mono font-medium ${
+                        tx.flow === 'income'
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : tx.flow === 'expense'
+                            ? 'text-rose-600 dark:text-rose-400'
+                            : 'text-foreground'
+                      }`}>
+                        {tx.flow === 'income' ? '+' : tx.flow === 'expense' ? '-' : ''}{formatBRL(tx.amount)}
+                      </td>
+                      <td className="px-4 py-1.5">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            onClick={() => openEdit(tx)}
                           >
-                            {tag.name}
-                          </span>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${FLOW_COLOR[tx.flow]}`}>
-                        {FLOW_LABEL[tx.flow]}
-                      </span>
-                    </td>
-                    <td className={`px-4 py-3 text-right font-mono font-medium ${
-                      tx.flow === 'income'
-                        ? 'text-emerald-600 dark:text-emerald-400'
-                        : tx.flow === 'expense'
-                          ? 'text-rose-600 dark:text-rose-400'
-                          : 'text-foreground'
-                    }`}>
-                      {tx.flow === 'income' ? '+' : tx.flow === 'expense' ? '-' : ''}{formatBRL(tx.amount)}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost" size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-foreground"
-                          onClick={() => openEdit(tx)}
-                        >
-                          <Pencil size={13} />
-                        </Button>
-                        <Button
-                          variant="ghost" size="icon"
-                          className="h-7 w-7 text-muted-foreground hover:text-rose-500"
-                          onClick={() => handleDelete(tx)}
-                        >
-                          <Trash2 size={13} />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {data?.items.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                      Nenhuma transação encontrada.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          )}
+                            <Pencil size={13} />
+                          </Button>
+                          <Button
+                            variant="ghost" size="icon"
+                            className="h-7 w-7 text-muted-foreground hover:text-rose-500"
+                            onClick={() => handleDelete(tx)}
+                          >
+                            <Trash2 size={13} />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {data?.items.length === 0 && (
+                    <tr>
+                      <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                        Nenhuma transação encontrada.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            )}
+          </div>
         </CardContent>
       </Card>
 
       {/* Paginação */}
-      {totalPages > 1 && (
-        <div className="flex justify-center gap-2">
-          <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-            Anterior
-          </Button>
-          <span className="text-sm text-muted-foreground self-center">
-            Página {page} de {totalPages}
-          </span>
-          <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
-            Próxima
-          </Button>
-        </div>
-      )}
+      <div className="shrink-0 flex items-center justify-center gap-2">
+        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+          Anterior
+        </Button>
+        <span className="text-sm text-muted-foreground">
+          Página {page} de {totalPages}
+        </span>
+        <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+          Próxima
+        </Button>
+      </div>
 
       {/* ── Dialog: criar / editar transação ───────────────────────────────── */}
       <Dialog open={txOpen} onOpenChange={setTxOpen}>

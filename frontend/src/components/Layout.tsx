@@ -55,7 +55,9 @@ export default function Layout() {
   const isDark = theme === 'dark'
 
   return (
-    <div className="flex h-screen bg-background text-foreground">
+    <div className="flex flex-col h-screen bg-background text-foreground">
+      <div className="h-0.75 bg-primary shrink-0" />
+      <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
       <aside className="w-56 shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border text-sidebar-foreground">
         <div className="px-6 py-5 border-b border-sidebar-border">
@@ -118,6 +120,7 @@ export default function Layout() {
       </main>
 
       <Toaster richColors position="top-right" />
+      </div>
     </div>
   )
 }
