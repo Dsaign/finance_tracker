@@ -25,6 +25,7 @@ class ParsedTransaction:
     # Campos opcionais extraídos quando o formato os fornece
     installment_current: int | None = None   # ex: 2  (de "Parcela 2/6")
     installment_total: int | None = None     # ex: 6
+    external_id: str | None = None           # identificador único da origem (ex: UUID do Nubank)
     raw: dict = field(default_factory=dict)  # linha original para debug
 
     def __post_init__(self):

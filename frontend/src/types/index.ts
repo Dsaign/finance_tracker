@@ -62,6 +62,7 @@ export interface Transaction {
   description: string
   amount: string
   flow: TransactionFlow
+  external_id: string | null
   is_manual: boolean
   tags: Tag[]
   created_at: string

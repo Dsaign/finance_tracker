@@ -20,7 +20,7 @@ Nome do produto: **Mirante**.
 
 ### Backend (`backend/app/`) — completo
 - `models/` — todos os models SQLAlchemy validados
-- `parsers/` — Nubank CSV e Bradesco OFX
+- `parsers/` — Nubank CSV (cartão de crédito e conta corrente, detecção automática por header) e Bradesco OFX
 - `schemas/` — Pydantic schemas para todas as entidades
 - `routers/institutions.py` — CRUD de instituições
 - `routers/accounts.py` — CRUD de contas e grupos de contas
@@ -44,7 +44,7 @@ Nome do produto: **Mirante**.
   - `EmptyState` — estado vazio padronizado com ilustração SVG e mensagem/ação
 - **Páginas conectadas ao backend:**
   - `Dashboard` — gráficos de período e por tag (Recharts), resumo financeiro, progresso de goals
-  - `Transactions` — abas por conta, tabela com altura dinâmica (ResizeObserver), coluna Conta condicional, totais Entradas/Saídas no rodapé, busca, filtro por tipo, paginação com setas, criação/edição de transações via dialog, importação de extrato via dialog (drag-and-drop CSV/OFX)
+  - `Transactions` — abas por conta, tabela com altura dinâmica (ResizeObserver), coluna Conta condicional, totais Entradas/Saídas no rodapé, busca, filtro por tipo, paginação com setas, criação/edição de transações via dialog, importação de extrato via dialog (drag-and-drop CSV/OFX); descrições longas truncadas a 55 chars com tooltip
   - `Goals` — CRUD completo de objetivos e dívidas (criar/editar/excluir) via modais, barra de progresso, estado vazio com ilustração
   - `Tags` — CRUD de tags (cor, nome) e regras de categorização (keyword)
   - `Settings` — CRUD de instituições, grupos de contas e contas com dialogs de criação/edição

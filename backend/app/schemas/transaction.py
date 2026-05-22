@@ -21,6 +21,7 @@ class TransactionResponse(BaseModel):
     description: str
     amount: Decimal
     flow: TransactionFlow
+    external_id: str | None
     is_manual: bool
     tags: list[TagResponse]
     created_at: datetime.datetime
