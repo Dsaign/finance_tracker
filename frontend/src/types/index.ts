@@ -73,6 +73,8 @@ export interface TransactionListResponse {
   total: number
   page: number
   page_size: number
+  total_income: string
+  total_expense: string
 }
 
 // ── Imports ───────────────────────────────────────────────────────────────────
