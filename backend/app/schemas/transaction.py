@@ -34,6 +34,8 @@ class TransactionListResponse(BaseModel):
     total: int
     page: int
     page_size: int
+    total_income: Decimal = Decimal('0')
+    total_expense: Decimal = Decimal('0')
 
 
 class TransactionCreate(BaseModel):

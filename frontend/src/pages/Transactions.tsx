@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from '@/components/ui/dialog'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/api'
-import { formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
+import { cn, formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
 import type { Account, Tag, Transaction, TransactionFlow, TransactionListResponse, ImportResult } from '@/types'
 
 const FLOW_COLOR: Record<string, string> = {
@@ -44,8 +44,9 @@ export default function Transactions() {
   const [flow,    setFlow]    = useState<string>('all')
   const [page,    setPage]    = useState(1)
 
-  const [accounts, setAccounts] = useState<Account[]>([])
-  const [allTags,  setAllTags]  = useState<Tag[]>([])
+  const [accounts,         setAccounts]         = useState<Account[]>([])
+  const [allTags,          setAllTags]          = useState<Tag[]>([])
+  const [selectedAccount,  setSelectedAccount]  = useState<string>('all')
 
   const [txOpen,  setTxOpen]  = useState(false)
   const [editTx,  setEditTx]  = useState<Transaction | null>(null)
@@ -62,10 +63,11 @@ export default function Transactions() {
   const [containerH, setContainerH] = useState(0)
   const tableRef = useRef<HTMLDivElement>(null)
 
-  // ROW_MIN_H = py-1.5 (12px) + h-7 botões (28px) = 40px real
-  // HEADER_H  = py-2 (16px) + text-xs (16px) ≈ 35px
-  const ROW_MIN_H = 40
-  const HEADER_H  = 35
+  // ROW_MIN_H = altura mínima de linha para evitar oscilação do layout durante o carregamento
+  // HEADER_H = altura do header da tabela, para calcular quantas linhas cabem no container sem scroll
+  const ROW_MIN_H = 30
+  const HEADER_H  = 30
+  
   // pageSize e rowH derivados deterministicamente do containerH — sem oscilação
   const pageSize = containerH > 0
     ? Math.max(5, Math.floor((containerH - HEADER_H) / ROW_MIN_H))
@@ -88,13 +90,14 @@ export default function Transactions() {
     api.transactions.list({
       search: search || undefined,
       flow: flow !== 'all' ? flow : undefined,
+      account_id: selectedAccount !== 'all' ? parseInt(selectedAccount) : undefined,
       page,
       page_size: pageSize,
     }).then(setData).catch(e => toast.error(e.message))
       .finally(() => setLoading(false))
-  }, [search, flow, page, pageSize])
+  }, [search, flow, selectedAccount, page, pageSize])
 
-  useEffect(() => { setPage(1) }, [search, flow, pageSize])
+  useEffect(() => { setPage(1) }, [search, flow, selectedAccount, pageSize])
   useEffect(() => { load() }, [load])
 
   useEffect(() => {
@@ -211,9 +214,11 @@ export default function Transactions() {
   }
 
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1
+  const accountMap = new Map(accounts.map(a => [a.id, a]))
+  const showAccountCol = selectedAccount === 'all'
 
   return (
-    <div className="flex flex-col h-full p-6 gap-4">
+    <div className="flex flex-col h-full p-6 gap-3">
       {/* Cabeçalho */}
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold">Extrato</h1>
@@ -225,6 +230,35 @@ export default function Transactions() {
             <Plus size={14} /> Nova transação
           </Button>
         </div>
+      </div>
+
+      {/* Abas de conta */}
+      <div className="flex gap-1 shrink-0">
+        <button
+          onClick={() => setSelectedAccount('all')}
+          className={cn(
+            'px-3 py-1 text-sm rounded-md transition-colors',
+            selectedAccount === 'all'
+              ? 'bg-accent text-accent-foreground font-medium'
+              : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          )}
+        >
+          Todas as contas
+        </button>
+        {accounts.map(a => (
+          <button
+            key={a.id}
+            onClick={() => setSelectedAccount(String(a.id))}
+            className={cn(
+              'px-3 py-1 text-sm rounded-md transition-colors',
+              selectedAccount === String(a.id)
+                ? 'bg-accent text-accent-foreground font-medium'
+                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+            )}
+          >
+            {a.name}
+          </button>
+        ))}
       </div>
 
       {/* Filtros */}
@@ -260,25 +294,31 @@ export default function Transactions() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wide">
-                    <th className="px-4 py-2 text-left font-medium">Data</th>
-                    <th className="px-4 py-2 text-left font-medium">Descrição</th>
-                    <th className="px-4 py-2 text-left font-medium">Tags</th>
-                    <th className="px-4 py-2 text-left font-medium">Tipo</th>
-                    <th className="px-4 py-2 text-right font-medium">Valor</th>
-                    <th className="px-4 py-2" />
+                    <th className="px-4 py-1.5 text-left font-medium">Data</th>
+                    <th className="px-4 py-1.5 text-left font-medium">Descrição</th>
+                    {showAccountCol && <th className="px-4 py-1.5 text-left font-medium">Conta</th>}
+                    <th className="px-4 py-1.5 text-left font-medium">Tags</th>
+                    <th className="px-4 py-1.5 text-left font-medium">Tipo</th>
+                    <th className="px-4 py-1.5 text-right font-medium">Valor</th>
+                    <th className="px-4 py-1.5" />
                   </tr>
                 </thead>
                 <tbody>
                   {data?.items.map(tx => (
-                    <tr key={tx.id} style={rowH ? { height: rowH } : undefined} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-1.5 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
-                      <td className="px-4 py-1.5 font-medium max-w-xs truncate">{tx.description}</td>
-                      <td className="px-4 py-1.5">
+                    <tr key={tx.id} style={rowH ? { height: rowH } : undefined} className="border-b border-border/40 hover:bg-accent-foreground/5 transition-colors">
+                      <td className="px-4 py-0.5 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
+                      <td className="px-4 py-0.5 font-normal max-w-xs truncate">{tx.description}</td>
+                      {showAccountCol && (
+                        <td className="px-4 py-0.5 text-sm text-muted-foreground whitespace-nowrap">
+                          {accountMap.get(tx.account_id)?.name ?? '—'}
+                        </td>
+                      )}
+                      <td className="px-4 py-0.5">
                         <div className="flex flex-wrap gap-1">
                           {tx.tags.map(tag => (
                             <span
                               key={tag.id}
-                              className="px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                              className="px-2 py-0.5 rounded-full text-xs font-normal text-white"
                               style={{ backgroundColor: tag.color ?? '#6b7280' }}
                             >
                               {tag.name}
@@ -286,12 +326,12 @@ export default function Transactions() {
                           ))}
                         </div>
                       </td>
-                      <td className="px-4 py-1.5">
+                      <td className="px-4 py-0.5">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${FLOW_COLOR[tx.flow]}`}>
                           {FLOW_LABEL[tx.flow]}
                         </span>
                       </td>
-                      <td className={`px-4 py-1.5 text-right font-mono font-medium ${
+                      <td className={`px-4 py-0.5 text-right font-mono font-medium ${
                         tx.flow === 'income'
                           ? 'text-emerald-600 dark:text-emerald-400'
                           : tx.flow === 'expense'
@@ -300,21 +340,21 @@ export default function Transactions() {
                       }`}>
                         {tx.flow === 'income' ? '+' : tx.flow === 'expense' ? '-' : ''}{formatBRL(tx.amount)}
                       </td>
-                      <td className="px-4 py-1.5">
+                      <td className="px-4 py-0.5">
                         <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost" size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-foreground"
+                            className="h-6 w-6 text-muted-foreground hover:text-foreground"
                             onClick={() => openEdit(tx)}
                           >
-                            <Pencil size={13} />
+                            <Pencil size={11} />
                           </Button>
                           <Button
                             variant="ghost" size="icon"
-                            className="h-7 w-7 text-muted-foreground hover:text-rose-500"
+                            className="h-6 w-6 text-muted-foreground hover:text-rose-500"
                             onClick={() => handleDelete(tx)}
                           >
-                            <Trash2 size={13} />
+                            <Trash2 size={11} />
                           </Button>
                         </div>
                       </td>
@@ -322,7 +362,7 @@ export default function Transactions() {
                   ))}
                   {data?.items.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
+                      <td colSpan={showAccountCol ? 7 : 6} className="px-4 py-12 text-center text-muted-foreground">
                         Nenhuma transação encontrada.
                       </td>
                     </tr>
@@ -334,12 +374,12 @@ export default function Transactions() {
         </CardContent>
       </Card>
 
-      {/* Paginação */}
-      <div className="shrink-0 flex items-center justify-between">
+      {/* Rodapé: contagem | paginação | totais */}
+      <div className="shrink-0 grid grid-cols-3 items-center">
         <span className="text-sm text-muted-foreground">
           {data ? `${data.total} transações` : ''}
         </span>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center justify-center gap-1.5">
           <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
             <ChevronLeft size={15} />
           </Button>
@@ -350,6 +390,22 @@ export default function Transactions() {
             <ChevronRight size={15} />
           </Button>
         </div>
+        {data && (
+          <div className="flex items-center justify-end gap-4">
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-muted-foreground">Entradas</span>
+              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums">
+                +{formatBRL(data.total_income)}
+              </span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-muted-foreground">Saídas</span>
+              <span className="text-sm font-medium text-rose-600 dark:text-rose-400 tabular-nums">
+                -{formatBRL(data.total_expense)}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Dialog: importar extrato ────────────────────────────────────────── */}

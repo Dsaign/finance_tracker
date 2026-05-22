@@ -103,7 +103,18 @@ def list_transactions(
         .all()
     )
 
-    return TransactionListResponse(items=items, total=total, page=page, page_size=page_size)
+    def _sum_flow(f: TransactionFlow) -> Decimal:
+        return _apply_filters(
+            db.query(func.sum(Transaction.amount)),
+            account_id, account_group_id, date_from, date_to,
+            f, search, tag_ids or None, db,
+        ).scalar() or Decimal('0')
+
+    return TransactionListResponse(
+        items=items, total=total, page=page, page_size=page_size,
+        total_income=_sum_flow(TransactionFlow.income),
+        total_expense=_sum_flow(TransactionFlow.expense),
+    )
 
 
 @router.post("/", response_model=TransactionResponse, status_code=status.HTTP_201_CREATED)
