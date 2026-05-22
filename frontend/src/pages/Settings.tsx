@@ -15,6 +15,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { api } from '@/api'
+import { InstitutionName } from '@/components/ui/institution-logo'
 import { ACCOUNT_TYPE_LABEL } from '@/lib/utils'
 import type { Account, AccountGroup, AccountType, Institution } from '@/types'
 
@@ -34,7 +35,7 @@ function slugify(text: string): string {
     .replace(/^_|_$/g, '')
 }
 
-const INST_EMPTY  = { name: '', slug: '', parser_type: '', logo_url: '' }
+const INST_EMPTY  = { name: '', slug: '', parser_type: '' }
 const GROUP_EMPTY = { name: '', description: '' }
 const ACCT_EMPTY  = { name: '', institution_id: '', account_group_id: '', type: '' as AccountType | '', currency: 'BRL', active: true }
 
@@ -80,7 +81,7 @@ export default function Settings() {
   }
   function openInstEdit(inst: Institution) {
     setEditInst(inst)
-    setInstForm({ name: inst.name, slug: inst.slug, parser_type: inst.parser_type, logo_url: inst.logo_url ?? '' })
+    setInstForm({ name: inst.name, slug: inst.slug, parser_type: inst.parser_type })
     setInstOpen(true)
   }
   async function submitInst() {
@@ -90,7 +91,7 @@ export default function Settings() {
     }
     setSaving(true)
     try {
-      const payload = { ...instForm, logo_url: instForm.logo_url || null }
+      const payload = instForm
       if (editInst) {
         await api.institutions.update(editInst.id, payload)
         toast.success('Instituição atualizada')
@@ -242,7 +243,9 @@ export default function Settings() {
                   )}
                   {institutions.map(inst => (
                     <tr key={inst.id} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
-                      <td className="px-4 py-3 font-medium">{inst.name}</td>
+                      <td className="px-4 py-3 font-medium">
+                        <InstitutionName slug={inst.slug} name={inst.name} />
+                      </td>
                       <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{inst.slug}</td>
                       <td className="px-4 py-3 text-muted-foreground">{PARSERS.find(p => p.value === inst.parser_type)?.label ?? inst.parser_type}</td>
                       <td className="px-4 py-3">
@@ -322,7 +325,9 @@ export default function Settings() {
                   {accounts.map(acct => (
                     <tr key={acct.id} className="border-b border-border/40 hover:bg-muted/40 transition-colors">
                       <td className="px-4 py-3 font-medium">{acct.name}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{acct.institution.name}</td>
+                      <td className="px-4 py-3 text-muted-foreground">
+                        <InstitutionName slug={acct.institution.slug} name={acct.institution.name} />
+                      </td>
                       <td className="px-4 py-3 text-muted-foreground">{ACCOUNT_TYPE_LABEL[acct.type]}</td>
                       <td className="px-4 py-3">
                         <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${acct.active ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
@@ -359,6 +364,7 @@ export default function Settings() {
                   const name = e.target.value
                   setInstForm(f => ({ ...f, name, ...(!editInst && { slug: slugify(name) }) }))
                 }}
+                maxLength={30}
                 placeholder="ex: Nubank"
               />
             </div>
@@ -368,6 +374,7 @@ export default function Settings() {
                 value={instForm.slug}
                 onChange={e => setInstForm(f => ({ ...f, slug: e.target.value }))}
                 placeholder="ex: nubank"
+                maxLength={30}
                 className="font-mono"
               />
             </div>
@@ -379,14 +386,6 @@ export default function Settings() {
                   {PARSERS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
                 </SelectContent>
               </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>URL do logo <span className="text-xs text-muted-foreground">(opcional)</span></Label>
-              <Input
-                value={instForm.logo_url}
-                onChange={e => setInstForm(f => ({ ...f, logo_url: e.target.value }))}
-                placeholder="https://..."
-              />
             </div>
           </div>
           <DialogFooter>
@@ -439,6 +438,7 @@ export default function Settings() {
               <Input
                 value={acctForm.name}
                 onChange={e => setAcctForm(f => ({ ...f, name: e.target.value }))}
+                maxLength={30}
                 placeholder="ex: Nubank Cartão"
               />
             </div>
@@ -447,7 +447,11 @@ export default function Settings() {
               <Select value={acctForm.institution_id} onValueChange={v => setAcctForm(f => ({ ...f, institution_id: v }))}>
                 <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
                 <SelectContent>
-                  {institutions.map(i => <SelectItem key={i.id} value={String(i.id)}>{i.name}</SelectItem>)}
+                  {institutions.map(i => (
+                    <SelectItem key={i.id} value={String(i.id)}>
+                      <InstitutionName slug={i.slug} name={i.name} />
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

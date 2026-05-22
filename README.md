@@ -186,7 +186,7 @@ Para adicionar uma nova instituição:
 
 | Tabela | Descrição |
 |---|---|
-| `institution` | Bancos/fintechs cadastrados |
+| `institution` | Bancos/fintechs cadastrados; logo identificado pelo `slug` → `public/assets/logos/<slug>.svg` |
 | `account_group` | Agrupamento de contas (ex: PJ, PF) |
 | `account` | Conta de uma instituição (corrente, poupança, cartão) |
 | `import_file` | Registro de cada arquivo importado (deduplicação por hash) |
