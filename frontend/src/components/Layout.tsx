@@ -1,6 +1,6 @@
 import { NavLink, Outlet } from 'react-router-dom'
 import {
-  LayoutDashboard, ArrowLeftRight, Upload,
+  LayoutDashboard, ArrowLeftRight,
   Tags, Target, Settings, Sun, Moon,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -44,7 +44,6 @@ function MiranteLogo() {
 const NAV = [
   { to: '/',             icon: LayoutDashboard, label: 'Dashboard'     },
   { to: '/transactions', icon: ArrowLeftRight,  label: 'Extrato'       },
-  { to: '/import',       icon: Upload,          label: 'Importar'      },
   { to: '/goals',        icon: Target,          label: 'Objetivos'     },
   { to: '/tags',         icon: Tags,            label: 'Tags'          },
   { to: '/settings',     icon: Settings,        label: 'Configurações' },
@@ -56,7 +55,7 @@ export default function Layout() {
 
   return (
     <div className="flex flex-col h-screen bg-background text-foreground">
-      <div className="h-0.75 bg-primary shrink-0" />
+      <div className="h-0.75 bg-primary/70 shrink-0" />
       <div className="flex flex-1 min-h-0">
       {/* Sidebar */}
       <aside className="w-56 shrink-0 flex flex-col bg-sidebar border-r border-sidebar-border text-sidebar-foreground">

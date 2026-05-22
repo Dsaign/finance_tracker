@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Trash2, Plus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Trash2, Plus, Pencil, ChevronLeft, ChevronRight, Download, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/api'
 import { formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
-import type { Account, Tag, Transaction, TransactionFlow, TransactionListResponse } from '@/types'
+import type { Account, Tag, Transaction, TransactionFlow, TransactionListResponse, ImportResult } from '@/types'
 
 const FLOW_COLOR: Record<string, string> = {
   income:   'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
@@ -51,6 +51,14 @@ export default function Transactions() {
   const [editTx,  setEditTx]  = useState<Transaction | null>(null)
   const [txForm,  setTxForm]  = useState(TX_EMPTY)
   const [saving,   setSaving]   = useState(false)
+
+  const [importOpen,      setImportOpen]      = useState(false)
+  const [importAccountId, setImportAccountId] = useState('')
+  const [importFile,      setImportFile]      = useState<File | null>(null)
+  const [importLoading,   setImportLoading]   = useState(false)
+  const [importResult,    setImportResult]    = useState<ImportResult | null>(null)
+  const importInputRef = useRef<HTMLInputElement>(null)
+
   const [containerH, setContainerH] = useState(0)
   const tableRef = useRef<HTMLDivElement>(null)
 
@@ -171,6 +179,37 @@ export default function Transactions() {
       .catch(e => toast.error(e.message))
   }
 
+  function openImport() {
+    setImportAccountId('')
+    setImportFile(null)
+    setImportResult(null)
+    setImportOpen(true)
+  }
+
+  function handleImportDrop(e: React.DragEvent) {
+    e.preventDefault()
+    const f = e.dataTransfer.files[0]
+    if (f) { setImportFile(f); setImportResult(null) }
+  }
+
+  async function submitImport() {
+    if (!importAccountId || !importFile) {
+      toast.error('Selecione uma conta e um arquivo.')
+      return
+    }
+    setImportLoading(true)
+    try {
+      const r = await api.imports.upload(parseInt(importAccountId), importFile)
+      setImportResult(r)
+      toast.success(`${r.total_inserted} transações importadas!`)
+      load()
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro ao importar')
+    } finally {
+      setImportLoading(false)
+    }
+  }
+
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1
 
   return (
@@ -178,9 +217,14 @@ export default function Transactions() {
       {/* Cabeçalho */}
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold">Extrato</h1>
-        <Button size="sm" onClick={openCreate}>
-          <Plus size={14} /> Nova transação
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={openImport}>
+            <Download size={14} /> Importar
+          </Button>
+          <Button size="sm" onClick={openCreate}>
+            <Plus size={14} /> Nova transação
+          </Button>
+        </div>
       </div>
 
       {/* Filtros */}
@@ -307,6 +351,83 @@ export default function Transactions() {
           </Button>
         </div>
       </div>
+
+      {/* ── Dialog: importar extrato ────────────────────────────────────────── */}
+      <Dialog open={importOpen} onOpenChange={open => { setImportOpen(open); if (!open) { setImportFile(null); setImportResult(null) } }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Importar extrato</DialogTitle>
+          </DialogHeader>
+
+          {importResult ? (
+            <div className="py-4 space-y-3">
+              <div className="flex items-center gap-2 text-primary font-medium">
+                <CheckCircle2 size={16} /> Importação concluída — {importResult.filename}
+              </div>
+              <div className="text-sm space-y-1 text-muted-foreground">
+                <p><span className="font-medium text-foreground">{importResult.total_parsed}</span> linhas lidas</p>
+                <p><span className="font-medium text-foreground">{importResult.total_inserted}</span> transações inseridas</p>
+                {importResult.total_skipped > 0 && (
+                  <p className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                    <AlertCircle size={13} /> {importResult.total_skipped} duplicatas ignoradas
+                  </p>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="space-y-1.5">
+                <Label>Conta</Label>
+                <Select value={importAccountId} onValueChange={setImportAccountId}>
+                  <SelectTrigger><SelectValue placeholder="Selecione a conta..." /></SelectTrigger>
+                  <SelectContent>
+                    {accounts.map(a => (
+                      <SelectItem key={a.id} value={String(a.id)}>
+                        {a.name} — {a.institution.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div
+                onDrop={handleImportDrop}
+                onDragOver={e => e.preventDefault()}
+                onClick={() => importInputRef.current?.click()}
+                className="border-2 border-dashed border-border rounded-lg p-8 text-center cursor-pointer hover:border-primary hover:bg-primary/5 transition-colors"
+              >
+                <Download size={22} className="mx-auto mb-3 text-muted-foreground" />
+                {importFile ? (
+                  <p className="text-sm font-medium">{importFile.name}</p>
+                ) : (
+                  <>
+                    <p className="text-sm font-medium">Arraste o arquivo aqui</p>
+                    <p className="text-xs text-muted-foreground mt-1">ou clique para selecionar — CSV (Nubank) ou OFX (Bradesco)</p>
+                  </>
+                )}
+                <input
+                  ref={importInputRef}
+                  type="file"
+                  accept=".csv,.ofx"
+                  className="hidden"
+                  onChange={e => { const f = e.target.files?.[0]; if (f) { setImportFile(f); setImportResult(null) } }}
+                />
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">{importResult ? 'Fechar' : 'Cancelar'}</Button>
+            </DialogClose>
+            {!importResult && (
+              <Button onClick={submitImport} disabled={importLoading || !importAccountId || !importFile}>
+                {importLoading ? 'Importando...' : 'Importar extrato'}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* ── Dialog: criar / editar transação ───────────────────────────────── */}
       <Dialog open={txOpen} onOpenChange={setTxOpen}>
