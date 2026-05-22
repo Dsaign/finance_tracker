@@ -57,7 +57,7 @@ finance_tracker/
     └── src/
         ├── api/                ← cliente Axios + chamadas tipadas
         ├── components/
-        │   ├── ui/             ← shadcn/ui + CurrencyInput + EmptyState
+        │   ├── ui/             ← shadcn/ui + CurrencyInput + EmptyState + InstitutionLogo/InstitutionName
         │   └── Layout.tsx
         ├── pages/
         │   ├── Dashboard.tsx, Transactions.tsx, Goals.tsx
@@ -218,7 +218,7 @@ Para adicionar uma nova instituição:
 - [x] Tema Mirante (logo, favicon, dark mode, faixa primária no topo)
 - [x] Cliente HTTP integrado ao backend (`/api/v1`)
 - [x] Dashboard com gráficos (Recharts) e resumo financeiro
-- [x] Extrato: abas por conta, tabela adaptativa, totais Entradas/Saídas, paginação, CRUD de transações
+- [x] Extrato: abas por conta com indicador animado, tabela adaptativa, totais Entradas/Saídas/Saldo, paginação, CRUD de transações
 - [x] Importação de extrato via dialog no Extrato (drag-and-drop CSV/OFX)
 - [x] Objetivos: CRUD completo (criar/editar/excluir), barra de progresso, estado vazio
 - [x] Tags e regras de categorização (CRUD)
