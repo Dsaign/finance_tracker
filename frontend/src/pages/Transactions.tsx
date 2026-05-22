@@ -22,6 +22,17 @@ const FLOW_COLOR: Record<string, string> = {
   transfer: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
 }
 
+const AMOUNT_COLOR: Record<string, string> = {
+  income:   'text-emerald-600 dark:text-emerald-400',
+  expense:  'text-rose-600 dark:text-rose-400',
+  payment:  'text-foreground',
+  transfer: 'text-foreground',
+}
+
+const AMOUNT_SIGN: Record<string, string> = {
+  income: '+', expense: '-', payment: '', transfer: '',
+}
+
 const FLOW_OPTIONS: { value: TransactionFlow; label: string }[] = [
   { value: 'income',   label: 'Entrada' },
   { value: 'expense',  label: 'Saída' },
@@ -30,6 +41,10 @@ const FLOW_OPTIONS: { value: TransactionFlow; label: string }[] = [
 ]
 
 const today = () => new Date().toISOString().slice(0, 10)
+
+// Minimum row height and header height used to compute how many rows fit without scroll
+const ROW_MIN_H = 30
+const HEADER_H  = 30
 
 const TX_EMPTY = {
   date: today(),
@@ -65,12 +80,7 @@ export default function Transactions() {
   const [containerH, setContainerH] = useState(0)
   const tableRef = useRef<HTMLDivElement>(null)
 
-  // ROW_MIN_H = altura mínima de linha para evitar oscilação do layout durante o carregamento
-  // HEADER_H = altura do header da tabela, para calcular quantas linhas cabem no container sem scroll
-  const ROW_MIN_H = 30
-  const HEADER_H  = 30
-  
-  // pageSize e rowH derivados deterministicamente do containerH — sem oscilação
+  // pageSize e rowH derivados deterministicamente do containerH — sem oscilação de layout
   const pageSize = containerH > 0
     ? Math.max(5, Math.floor((containerH - HEADER_H) / ROW_MIN_H))
     : 20
@@ -106,8 +116,6 @@ export default function Transactions() {
     api.accounts.list(true).then(setAccounts).catch(() => {})
     api.tags.list().then(setAllTags).catch(() => {})
   }, [])
-
-  // ── Dialog helpers ──────────────────────────────────────────────────────────
 
   function openCreate() {
     setEditTx(null)
@@ -218,10 +226,12 @@ export default function Transactions() {
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1
   const accountMap = new Map(accounts.map(a => [a.id, a]))
   const showAccountCol = selectedAccount === 'all'
+  const balance = data
+    ? parseFloat(data.total_income) - parseFloat(data.total_expense)
+    : null
 
   return (
     <div className="flex flex-col h-full p-6 gap-3">
-      {/* Cabeçalho */}
       <div className="flex items-center justify-between shrink-0">
         <h1 className="text-2xl font-bold">Extrato</h1>
         <div className="flex gap-2">
@@ -234,7 +244,6 @@ export default function Transactions() {
         </div>
       </div>
 
-      {/* Abas de conta */}
       <UnderlineTabs value={selectedAccount} onValueChange={setSelectedAccount} className="shrink-0">
         <UnderlineTabsList>
           <UnderlineTabsTrigger value="all">Todas as contas</UnderlineTabsTrigger>
@@ -247,7 +256,6 @@ export default function Transactions() {
         </UnderlineTabsList>
       </UnderlineTabs>
 
-      {/* Filtros */}
       <div className="flex gap-3 shrink-0">
         <Input
           placeholder="Buscar descrição..."
@@ -268,7 +276,6 @@ export default function Transactions() {
         </Select>
       </div>
 
-      {/* Tabela */}
       <Card className="flex-1 min-h-0 flex flex-col overflow-hidden">
         <CardContent className="p-0 flex flex-col flex-1 min-h-0">
           <div ref={tableRef} className="flex-1 min-h-0 overflow-hidden">
@@ -290,7 +297,7 @@ export default function Transactions() {
                   </tr>
                 </thead>
                 <tbody className="text-sm">
-                  {data?.items.map(tx => (
+                  {data.items.map(tx => (
                     <tr key={tx.id} style={rowH ? { height: rowH } : undefined} className="border-b border-border/40 hover:bg-accent-foreground/5 transition-colors">
                       <td className="px-4 py-0.5 text-muted-foreground whitespace-nowrap">{formatDate(tx.date)}</td>
                       <td
@@ -322,14 +329,8 @@ export default function Transactions() {
                           {FLOW_LABEL[tx.flow]}
                         </span>
                       </td>
-                      <td className={`px-4 py-0.5 text-right font-mono font-medium ${
-                        tx.flow === 'income'
-                          ? 'text-emerald-600 dark:text-emerald-400'
-                          : tx.flow === 'expense'
-                            ? 'text-rose-600 dark:text-rose-400'
-                            : 'text-foreground'
-                      }`}>
-                        {tx.flow === 'income' ? '+' : tx.flow === 'expense' ? '-' : ''}{formatBRL(tx.amount)}
+                      <td className={`px-4 py-0.5 text-right font-mono font-medium ${AMOUNT_COLOR[tx.flow]}`}>
+                        {AMOUNT_SIGN[tx.flow]}{formatBRL(tx.amount)}
                       </td>
                       <td className="px-4 py-0.5">
                         <div className="flex justify-end gap-1">
@@ -351,7 +352,7 @@ export default function Transactions() {
                       </td>
                     </tr>
                   ))}
-                  {data?.items.length === 0 && (
+                  {data.items.length === 0 && (
                     <tr>
                       <td colSpan={showAccountCol ? 7 : 6} className="px-4 py-12 text-center text-muted-foreground">
                         Nenhuma transação encontrada.
@@ -381,31 +382,28 @@ export default function Transactions() {
             <ChevronRight size={15} />
           </Button>
         </div>
-        {data && (() => {
-          const balance = parseFloat(data.total_income) - parseFloat(data.total_expense)
-          return (
-            <div className="flex items-center justify-end gap-4">
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-muted-foreground">Entradas</span>
-                <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums">
-                  +{formatBRL(data.total_income)}
-                </span>
-              </div>
-              <div className="flex flex-col items-end">
-                <span className="text-xs text-muted-foreground">Saídas</span>
-                <span className="text-sm font-medium text-rose-600 dark:text-rose-400 tabular-nums">
-                  -{formatBRL(data.total_expense)}
-                </span>
-              </div>
-              <div className="flex flex-col items-end pl-4 border-l border-border">
-                <span className="text-xs text-muted-foreground">Saldo</span>
-                <span className={`text-sm font-medium tabular-nums ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                  {balance >= 0 ? '+' : ''}{formatBRL(String(Math.abs(balance)))}
-                </span>
-              </div>
+        {data && balance !== null && (
+          <div className="flex items-center justify-end gap-4">
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-muted-foreground">Entradas</span>
+              <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400 tabular-nums">
+                +{formatBRL(data.total_income)}
+              </span>
             </div>
-          )
-        })()}
+            <div className="flex flex-col items-end">
+              <span className="text-xs text-muted-foreground">Saídas</span>
+              <span className="text-sm font-medium text-rose-600 dark:text-rose-400 tabular-nums">
+                -{formatBRL(data.total_expense)}
+              </span>
+            </div>
+            <div className="flex flex-col items-end pl-4 border-l border-border">
+              <span className="text-xs text-muted-foreground">Saldo</span>
+              <span className={`text-sm font-medium tabular-nums ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+                {balance >= 0 ? '+' : ''}{formatBRL(String(Math.abs(balance)))}
+              </span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Dialog: importar extrato ────────────────────────────────────────── */}

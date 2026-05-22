@@ -4,6 +4,7 @@ import { Plus, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
+import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/api'
 import type { Tag, CategoryRule } from '@/types'
@@ -83,8 +84,8 @@ export default function Tags() {
         <CardHeader><CardTitle className="text-sm">Nova tag</CardTitle></CardHeader>
         <CardContent>
           <div className="flex gap-3 items-end">
-            <div className="flex-1 space-y-1">
-              <label className="text-xs text-muted-foreground">Nome</label>
+            <div className="flex-1 space-y-1.5">
+              <Label>Nome</Label>
               <Input
                 value={newTag.name}
                 onChange={e => setNewTag(t => ({ ...t, name: e.target.value }))}
@@ -92,8 +93,8 @@ export default function Tags() {
                 placeholder="ex: Alimentação"
               />
             </div>
-            <div className="space-y-1">
-              <label className="text-xs text-muted-foreground">Cor</label>
+            <div className="space-y-1.5">
+              <Label>Cor</Label>
               <input
                 type="color"
                 value={newTag.color}

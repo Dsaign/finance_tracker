@@ -9,7 +9,7 @@ import { api } from '@/api'
 import { formatBRL, GOAL_TYPE_LABEL } from '@/lib/utils'
 import type { DashboardSummary, ByPeriodResponse, ByTagResponse, GoalProgress } from '@/types'
 
-const CHART_COLORS = ['#33a95a', '#6395ee', '#65daf0', '#4582b5', '#199741', '#ec4899']
+const CHART_COLORS = ['#33a95a', '#ef4444', '#6395ee', '#65daf0', '#4582b5', '#199741', '#ec4899']
 
 function SummaryCards({ data }: { data: DashboardSummary }) {
   const cards = [
@@ -56,7 +56,7 @@ function PeriodChart({ data }: { data: ByPeriodResponse }) {
             <Tooltip formatter={(v) => formatBRL(Number(v))} />
             <Legend />
             <Bar dataKey="Entradas" fill={CHART_COLORS[0]} radius={[3,3,0,0]} />
-            <Bar dataKey="Saídas"   fill="#ef4444" radius={[3,3,0,0]} />
+            <Bar dataKey="Saídas"   fill={CHART_COLORS[1]} radius={[3,3,0,0]} />
           </BarChart>
         </ResponsiveContainer>
       </CardContent>
@@ -79,8 +79,7 @@ function TagPieChart({ data }: { data: ByTagResponse }) {
           <ResponsiveContainer width="100%" height={240}>
             <PieChart>
               <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80}
-                label={({ name, percent }) =>
-                  `${name ?? ''} ${(((percent as number | undefined) ?? 0) * 100).toFixed(0)}%`}
+                label={({ name, percent }) => `${name ?? ''} ${((percent as number) * 100).toFixed(0)}%`}
                 labelLine={false}
               >
                 {pieData.map((_, i) => (

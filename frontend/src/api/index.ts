@@ -2,7 +2,7 @@ import client from './client'
 import type {
   Account, AccountGroup, ByPeriodResponse, ByTagResponse,
   CategoryRule, DashboardSummary, Goal, GoalProgress,
-  ImportResult, Institution, MerchantRow, Tag,
+  ImportResult, Institution, Tag,
   Transaction, TransactionListResponse,
 } from '@/types'
 
@@ -48,8 +48,6 @@ export const api = {
         headers: { 'Content-Type': 'multipart/form-data' },
       }).then(r => r.data)
     },
-    list: (accountId?: number) =>
-      client.get('/imports/', { params: accountId ? { account_id: accountId } : {} }).then(r => r.data),
   },
 
   tags: {
@@ -74,8 +72,6 @@ export const api = {
     update: (id: number, data: object) => client.patch<Goal>(`/goals/${id}`, data).then(r => r.data),
     updateDebt: (id: number, data: object) =>
       client.patch<Goal>(`/goals/${id}/debt`, data).then(r => r.data),
-    setAccounts: (id: number, accountIds: number[]) =>
-      client.put<Goal>(`/goals/${id}/accounts`, { account_ids: accountIds }).then(r => r.data),
     delete: (id: number) => client.delete(`/goals/${id}`),
   },
 
@@ -86,8 +82,6 @@ export const api = {
       client.get<ByPeriodResponse>('/dashboard/by-period', { params }).then(r => r.data),
     byTag: (params: object) =>
       client.get<ByTagResponse>('/dashboard/by-tag', { params }).then(r => r.data),
-    topMerchants: (params: object) =>
-      client.get<{ merchants: MerchantRow[] }>('/dashboard/top-merchants', { params }).then(r => r.data),
     goals: () =>
       client.get<GoalProgress[]>('/dashboard/goals').then(r => r.data),
   },
