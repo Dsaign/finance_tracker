@@ -1,4 +1,5 @@
 import datetime
+from decimal import Decimal
 from pydantic import BaseModel
 from app.models.account import AccountType
 from .institution import InstitutionResponse
@@ -33,6 +34,8 @@ class AccountBase(BaseModel):
     type: AccountType
     currency: str = "BRL"
     active: bool = True
+    opening_balance: Decimal = Decimal("0.00")
+    opening_date: datetime.date | None = None
 
 
 class AccountCreate(AccountBase):
@@ -46,6 +49,8 @@ class AccountUpdate(BaseModel):
     type: AccountType | None = None
     currency: str | None = None
     active: bool | None = None
+    opening_balance: Decimal | None = None
+    opening_date: datetime.date | None = None
 
 
 class AccountResponse(AccountBase):

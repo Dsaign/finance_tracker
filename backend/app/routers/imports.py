@@ -104,6 +104,7 @@ async def import_file(
             hash=tx_hash,
             external_id=pt.external_id,
             is_manual=False,
+            competencia=pt.date.strftime("%Y-%m"),
         )
         db.add(tx)
         existing_hashes.add(tx_hash)  # evita duplicatas dentro do próprio arquivo

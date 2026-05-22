@@ -93,6 +93,18 @@ Dois níveis:
 - `current_balance` é atualizado manualmente — não calculado pelas transações
 - `progress_percent` é uma `@property` calculada, nunca armazenada
 
+### Saldo de conta e opening_balance
+- `account.opening_balance` (DECIMAL 15,2, default 0) — saldo no momento em que o controle começou. Não é calculado automaticamente; o usuário informa ao cadastrar a conta.
+- `account.opening_date` (DATE, nullable) — data de referência do saldo inicial. Transações anteriores a essa data não entram no cálculo do saldo.
+- Fórmula: **saldo = opening_balance + Σ income − Σ expense** (transações a partir de `opening_date`).
+- O endpoint `/dashboard/summary` e o cálculo de progresso de goals não-dívida aplicam esse filtro por conta via JOIN: `WHERE account.opening_date IS NULL OR transaction.date >= account.opening_date`.
+- O campo `net` na resposta do `/dashboard/summary` já inclui o `opening_balance` somado de todas as contas consultadas.
+
+### date vs competencia em transações
+- `transaction.date` — data real da transação (data do lançamento no extrato). Usada para ordenação, filtros de período e deduplicação.
+- `transaction.competencia` (VARCHAR 7, nullable, formato "YYYY-MM") — mês/ano de competência para relatórios. Para conta corrente geralmente coincide com o mês de `date`; para cartão de crédito pode diferir (ex.: compra em 28/04 pode competir em 05/2026 quando a fatura fechar).
+- Na importação, `competencia` é preenchido automaticamente como `date.strftime("%Y-%m")`. O usuário pode corrigir manualmente via edição da transação.
+
 ## Convenções do projeto
 
 - Valores monetários: `Decimal` (backend), `string` no JSON, `parseFloat` no frontend quando necessário

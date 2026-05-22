@@ -56,6 +56,7 @@ class Transaction(Base, TimestampMixin):
     is_manual: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )
+    competencia: Mapped[str | None] = mapped_column(String(7), nullable=True)
 
     # Relacionamentos
     account: Mapped["Account"] = relationship(

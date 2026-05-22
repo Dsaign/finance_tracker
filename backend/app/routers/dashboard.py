@@ -1,7 +1,7 @@
 import datetime
 from decimal import Decimal
 from fastapi import APIRouter, Depends, Query, HTTPException
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.orm import Session, joinedload
 
 from app.database import get_db
@@ -75,12 +75,22 @@ def _common_params(
 def summary(params: dict = Depends(_common_params), db: Session = Depends(get_db)):
     account_ids = _resolve_account_ids(params["account_ids"], params["account_group_id"], db)
 
-    rows = _base_filter(
-        db.query(Transaction.flow, func.sum(Transaction.amount).label("total")),
-        account_ids,
-        params["date_from"],
-        params["date_to"],
-    ).group_by(Transaction.flow).all()
+    accounts = db.query(Account).filter(Account.id.in_(account_ids)).all() if account_ids else []
+    opening_balance = sum((a.opening_balance for a in accounts), _ZERO)
+
+    # Apply per-account opening_date cutoff via JOIN so older transactions don't skew the balance
+    q = (
+        db.query(Transaction.flow, func.sum(Transaction.amount).label("total"))
+        .join(Account, Account.id == Transaction.account_id)
+    )
+    if account_ids:
+        q = q.filter(Transaction.account_id.in_(account_ids))
+    q = q.filter(or_(Account.opening_date.is_(None), Transaction.date >= Account.opening_date))
+    if params["date_from"]:
+        q = q.filter(Transaction.date >= params["date_from"])
+    if params["date_to"]:
+        q = q.filter(Transaction.date <= params["date_to"])
+    rows = q.group_by(Transaction.flow).all()
 
     totals = {row.flow: row.total for row in rows}
     income = totals.get(TransactionFlow.income, _ZERO)
@@ -94,7 +104,7 @@ def summary(params: dict = Depends(_common_params), db: Session = Depends(get_db
         total_income=income,
         total_expense=expense,
         total_payment=payment,
-        net=income - expense,
+        net=opening_balance + income - expense,
     )
 
 
@@ -219,19 +229,23 @@ def goals_progress(db: Session = Depends(get_db)):
             creditor = goal.debt.creditor
             balance = goal.debt.current_balance
         else:
-            # Soma o saldo das contas vinculadas (income - expense por conta)
-            account_ids = [ga.account_id for ga in goal.goal_accounts]
+            # Soma o saldo das contas vinculadas: opening_balance + income − expense a partir de opening_date
+            goal_account_ids = [ga.account_id for ga in goal.goal_accounts]
             current = _ZERO
-            if account_ids:
+            if goal_account_ids:
+                accts = db.query(Account).filter(Account.id.in_(goal_account_ids)).all()
+                current = sum((a.opening_balance for a in accts), _ZERO)
                 rows = (
                     db.query(Transaction.flow, func.sum(Transaction.amount).label("total"))
-                    .filter(Transaction.account_id.in_(account_ids))
+                    .join(Account, Account.id == Transaction.account_id)
+                    .filter(Transaction.account_id.in_(goal_account_ids))
+                    .filter(or_(Account.opening_date.is_(None), Transaction.date >= Account.opening_date))
                     .filter(Transaction.flow.in_([TransactionFlow.income, TransactionFlow.expense]))
                     .group_by(Transaction.flow)
                     .all()
                 )
                 totals = {r.flow: r.total for r in rows}
-                current = totals.get(TransactionFlow.income, _ZERO) - totals.get(TransactionFlow.expense, _ZERO)
+                current += totals.get(TransactionFlow.income, _ZERO) - totals.get(TransactionFlow.expense, _ZERO)
 
             percent = float(current / goal.target_amount * 100) if goal.target_amount else 0.0
             percent = min(percent, 100.0)
