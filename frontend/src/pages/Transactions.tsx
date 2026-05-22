@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Trash2, Plus, Pencil } from 'lucide-react'
+import { Trash2, Plus, Pencil, ChevronLeft, ChevronRight } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -202,11 +202,6 @@ export default function Transactions() {
             ))}
           </SelectContent>
         </Select>
-        {data && (
-          <span className="text-sm text-muted-foreground self-center ml-auto">
-            {data.total} transações
-          </span>
-        )}
       </div>
 
       {/* Tabela */}
@@ -296,16 +291,21 @@ export default function Transactions() {
       </Card>
 
       {/* Paginação */}
-      <div className="shrink-0 flex items-center justify-center gap-2">
-        <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
-          Anterior
-        </Button>
+      <div className="shrink-0 flex items-center justify-between">
         <span className="text-sm text-muted-foreground">
-          Página {page} de {totalPages}
+          {data ? `${data.total} transações` : ''}
         </span>
-        <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
-          Próxima
-        </Button>
+        <div className="flex items-center gap-1.5">
+          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === 1} onClick={() => setPage(p => p - 1)}>
+            <ChevronLeft size={15} />
+          </Button>
+          <span className="text-sm text-muted-foreground tabular-nums">
+            {page} de {totalPages}
+          </span>
+          <Button variant="ghost" size="icon" className="h-7 w-7" disabled={page === totalPages} onClick={() => setPage(p => p + 1)}>
+            <ChevronRight size={15} />
+          </Button>
+        </div>
       </div>
 
       {/* ── Dialog: criar / editar transação ───────────────────────────────── */}
