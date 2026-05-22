@@ -50,6 +50,9 @@ class Transaction(Base, TimestampMixin):
     hash: Mapped[str] = mapped_column(
         String(64), nullable=False, index=True
     )
+    external_id: Mapped[str | None] = mapped_column(
+        String(100), nullable=True, index=True
+    )
     is_manual: Mapped[bool] = mapped_column(
         Boolean, nullable=False, default=False
     )

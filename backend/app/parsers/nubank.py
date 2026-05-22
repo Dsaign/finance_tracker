@@ -1,161 +1,170 @@
 """
 Parser para extratos do Nubank exportados em CSV.
 
-Formato esperado (cartão de crédito):
+Suporta dois formatos:
+
+Formato A — Cartão de crédito:
     date,title,amount
     2026-05-19,iFood - NuPay,51.44
     2026-05-05,Pagamento recebido,-9016.63
-    2026-04-28,Casasbahiacom - Parcela 2/10,237.79
 
-Como obter o arquivo:
-    App Nubank → Meus extratos → Exportar → CSV
+Formato B — Conta corrente:
+    Data,Valor,Identificador,Descrição
+    01/05/2026,-55.72,69f4e734-...,Transferência enviada pelo Pix - ...
+    02/05/2026,70.00,69f681fb-...,Transferência recebida pelo Pix - ...
 
-Convenção de amount no extrato do Nubank (cartão):
-    Positivo → gasto (expense)
-    Negativo → pagamento de fatura (payment) ou estorno/crédito (income)
-
-Casos especiais tratados:
-    - Compras parceladas: "Parcela X/Y" extraído e preservado
-    - Pagamento de fatura: detectado pela descrição "Pagamento recebido"
-    - Juros de rotativo: detectado pela descrição "Juros de pagamento"
-      — tratado como expense (é um custo, não um crédito)
-    - Estornos genéricos: amount negativo sem ser pagamento → income
+Detecção automática pelo header do CSV.
 """
 
 import csv
 import io
 import re
-from datetime import date
+from datetime import date, datetime
 from decimal import Decimal, InvalidOperation
 from typing import BinaryIO
 
 from app.parsers.base import BaseParser, ParsedTransaction
 from app.models.transaction import TransactionFlow
 
-# Header exato que o Nubank usa — usado na validação
-_EXPECTED_HEADER = {"date", "title", "amount"}
+# Headers reconhecidos
+_CREDIT_HEADER = {"date", "title", "amount"}
+_CHECKING_HEADER = {"data", "valor", "identificador", "descrição"}
 
-# Regex para extrair número de parcela: "Parcela 2/10" → (2, 10)
 _INSTALLMENT_RE = re.compile(r"[Pp]arcela\s+(\d+)/(\d+)")
-
-# Descrições que indicam pagamento de fatura (amount negativo → payment)
-_PAYMENT_KEYWORDS = ("pagamento recebido",)
-
-# Descrições que indicam custo mesmo com amount negativo (juros, multa)
+_PAYMENT_KEYWORDS_CREDIT = ("pagamento recebido",)
 _COST_KEYWORDS = ("juros", "multa", "mora")
+_PAYMENT_KEYWORDS_CHECKING = ("pagamento de fatura",)
 
 
-def _detect_flow(description: str, amount: Decimal) -> TransactionFlow:
-    """
-    Determina o TransactionFlow com base na descrição e no sinal do amount.
-
-    Lógica para cartão de crédito Nubank:
-      amount > 0 → sempre expense
-      amount < 0 + "pagamento recebido" → payment
-      amount < 0 + keyword de custo (juros, multa) → expense
-        (o Nubank registra juros do rotativo como negativos,
-         mas são um custo, não um crédito a receber)
-      amount < 0 + outros → income (estorno, cashback, etc.)
-    """
+def _detect_flow_credit(description: str, amount: Decimal) -> TransactionFlow:
     desc_lower = description.lower()
-
     if amount > 0:
         return TransactionFlow.expense
-
-    # amount < 0 a partir daqui
-    if any(kw in desc_lower for kw in _PAYMENT_KEYWORDS):
+    if any(kw in desc_lower for kw in _PAYMENT_KEYWORDS_CREDIT):
         return TransactionFlow.payment
-
     if any(kw in desc_lower for kw in _COST_KEYWORDS):
         return TransactionFlow.expense
-
     return TransactionFlow.income
 
 
+def _detect_flow_checking(description: str, amount: Decimal) -> TransactionFlow:
+    desc_lower = description.lower()
+    if any(kw in desc_lower for kw in _PAYMENT_KEYWORDS_CHECKING):
+        return TransactionFlow.payment
+    return TransactionFlow.income if amount > 0 else TransactionFlow.expense
+
+
 def _parse_installment(description: str) -> tuple[str, int | None, int | None]:
-    """
-    Extrai info de parcelamento da descrição, se presente.
-
-    "Casasbahiacom - Parcela 2/10" →
-        ("Casasbahiacom", 2, 10)
-
-    "iFood - NuPay" →
-        ("iFood - NuPay", None, None)
-    """
     match = _INSTALLMENT_RE.search(description)
     if not match:
         return description, None, None
-
     current = int(match.group(1))
     total = int(match.group(2))
-
-    # Remove " - Parcela X/Y" da descrição para deixá-la limpa
     clean = _INSTALLMENT_RE.sub("", description)
-    clean = re.sub(r"\s+-\s*$", "", clean).strip()  # remove " - " sobrando no fim
-
+    clean = re.sub(r"\s+-\s*$", "", clean).strip()
     return clean, current, total
 
 
+def _read_header_set(file: BinaryIO) -> set[str]:
+    first_line = file.readline().decode("utf-8-sig").strip()
+    file.seek(0)
+    return {h.strip().lower() for h in first_line.split(",")}
+
+
 class NubankParser(BaseParser):
-    """Parser para extratos CSV do cartão de crédito Nubank."""
+    """Parser para extratos CSV do Nubank (cartão de crédito e conta corrente)."""
 
     PARSER_TYPE = "nubank_csv"
 
     def validate(self, file: BinaryIO) -> bool:
-        """Verifica se o header bate com o formato esperado do Nubank."""
         try:
-            first_line = file.readline().decode("utf-8").strip()
-            file.seek(0)
-            headers = {h.strip().lower() for h in first_line.split(",")}
-            return headers == _EXPECTED_HEADER
+            headers = _read_header_set(file)
+            return headers == _CREDIT_HEADER or headers == _CHECKING_HEADER
         except Exception:
             return False
 
     def parse(self, file: BinaryIO) -> list[ParsedTransaction]:
-        """
-        Lê o CSV e retorna lista de ParsedTransaction.
-
-        Linhas com amount inválido são ignoradas com aviso no stderr
-        para não interromper a importação inteira por um dado corrompido.
-        """
-        content = file.read().decode("utf-8")
+        content = file.read().decode("utf-8-sig")
         reader = csv.DictReader(io.StringIO(content))
+        headers = {h.strip().lower() for h in (reader.fieldnames or [])}
 
+        if headers == _CHECKING_HEADER:
+            return self._parse_checking(reader)
+        return self._parse_credit(reader)
+
+    # ── Formato A: cartão de crédito ──────────────────────────────────────────
+
+    def _parse_credit(self, reader) -> list[ParsedTransaction]:
         transactions: list[ParsedTransaction] = []
-
-        for i, row in enumerate(reader, start=2):  # linha 2 = primeira após header
+        for i, row in enumerate(reader, start=2):
             raw_date = row.get("date", "").strip()
             raw_title = row.get("title", "").strip()
             raw_amount = row.get("amount", "").strip()
 
             if not raw_date or not raw_title or not raw_amount:
-                continue  # linha em branco ou incompleta
+                continue
 
             try:
                 parsed_date = date.fromisoformat(raw_date)
             except ValueError:
-                print(f"[NubankParser] linha {i}: data inválida '{raw_date}', ignorada.")
+                print(f"[NubankParser/credit] linha {i}: data inválida '{raw_date}', ignorada.")
                 continue
 
             try:
                 amount = Decimal(raw_amount)
             except InvalidOperation:
-                print(f"[NubankParser] linha {i}: amount inválido '{raw_amount}', ignorada.")
+                print(f"[NubankParser/credit] linha {i}: amount inválido '{raw_amount}', ignorada.")
                 continue
 
-            flow = _detect_flow(raw_title, amount)
+            flow = _detect_flow_credit(raw_title, amount)
             clean_description, installment_current, installment_total = _parse_installment(raw_title)
 
-            transactions.append(
-                ParsedTransaction(
-                    date=parsed_date,
-                    description=clean_description,
-                    amount=amount,  # __post_init__ aplica abs()
-                    flow=flow,
-                    installment_current=installment_current,
-                    installment_total=installment_total,
-                    raw=dict(row),
-                )
-            )
+            transactions.append(ParsedTransaction(
+                date=parsed_date,
+                description=clean_description,
+                amount=amount,
+                flow=flow,
+                installment_current=installment_current,
+                installment_total=installment_total,
+                raw=dict(row),
+            ))
+        return transactions
 
+    # ── Formato B: conta corrente ─────────────────────────────────────────────
+
+    def _parse_checking(self, reader) -> list[ParsedTransaction]:
+        transactions: list[ParsedTransaction] = []
+        for i, row in enumerate(reader, start=2):
+            # Normaliza chaves para lower sem BOM
+            norm = {k.strip().lower(): v for k, v in row.items()}
+            raw_date = norm.get("data", "").strip()
+            raw_amount = norm.get("valor", "").strip()
+            raw_id = norm.get("identificador", "").strip() or None
+            raw_desc = norm.get("descrição", "").strip()
+
+            if not raw_date or not raw_amount or not raw_desc:
+                continue
+
+            try:
+                parsed_date = datetime.strptime(raw_date, "%d/%m/%Y").date()
+            except ValueError:
+                print(f"[NubankParser/checking] linha {i}: data inválida '{raw_date}', ignorada.")
+                continue
+
+            try:
+                amount = Decimal(raw_amount.replace(",", "."))
+            except InvalidOperation:
+                print(f"[NubankParser/checking] linha {i}: amount inválido '{raw_amount}', ignorada.")
+                continue
+
+            flow = _detect_flow_checking(raw_desc, amount)
+
+            transactions.append(ParsedTransaction(
+                date=parsed_date,
+                description=raw_desc,
+                amount=amount,
+                flow=flow,
+                external_id=raw_id,
+                raw=dict(row),
+            ))
         return transactions

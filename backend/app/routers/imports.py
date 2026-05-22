@@ -102,6 +102,7 @@ async def import_file(
             amount=pt.amount,
             flow=pt.flow,
             hash=tx_hash,
+            external_id=pt.external_id,
             is_manual=False,
         )
         db.add(tx)
