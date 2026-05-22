@@ -57,7 +57,7 @@ finance_tracker/
     └── src/
         ├── api/                ← cliente Axios + chamadas tipadas
         ├── components/
-        │   ├── ui/             ← shadcn/ui + CurrencyInput + EmptyState + InstitutionLogo/InstitutionName
+        │   ├── ui/             ← shadcn/ui + CurrencyInput + EmptyState + InstitutionLogo/InstitutionName + UnderlineTabs
         │   └── Layout.tsx
         ├── pages/
         │   ├── Dashboard.tsx, Transactions.tsx, Goals.tsx
