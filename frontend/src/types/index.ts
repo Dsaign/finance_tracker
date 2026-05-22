@@ -5,7 +5,6 @@ export interface Institution {
   name: string
   slug: string
   parser_type: string
-  logo_url: string | null
   created_at: string
   updated_at: string | null
 }

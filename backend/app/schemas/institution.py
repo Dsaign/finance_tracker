@@ -6,7 +6,6 @@ class InstitutionBase(BaseModel):
     name: str
     slug: str
     parser_type: str
-    logo_url: str | None = None
 
 
 class InstitutionCreate(InstitutionBase):
@@ -17,7 +16,6 @@ class InstitutionUpdate(BaseModel):
     name: str | None = None
     slug: str | None = None
     parser_type: str | None = None
-    logo_url: str | None = None
 
 
 class InstitutionResponse(InstitutionBase):

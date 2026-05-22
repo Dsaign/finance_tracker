@@ -17,7 +17,6 @@ class Institution(Base, TimestampMixin):
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     slug: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
     parser_type: Mapped[str] = mapped_column(String(50), nullable=False)
-    logo_url: Mapped[str | None] = mapped_column(String(255), nullable=True)
 
     # Relacionamentos
     accounts: Mapped[list["Account"]] = relationship(

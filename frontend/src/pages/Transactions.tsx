@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Skeleton } from '@/components/ui/skeleton'
 import { api } from '@/api'
 import { CurrencyInput } from '@/components/ui/currency-input'
+import { InstitutionLogo, InstitutionName } from '@/components/ui/institution-logo'
 import { cn, formatBRL, formatDate, FLOW_LABEL } from '@/lib/utils'
 import type { Account, Tag, Transaction, TransactionFlow, TransactionListResponse, ImportResult } from '@/types'
 
@@ -251,12 +252,13 @@ export default function Transactions() {
             key={a.id}
             onClick={() => setSelectedAccount(String(a.id))}
             className={cn(
-              'px-3 py-1 text-sm rounded-md transition-colors',
+              'px-3 py-1 text-sm rounded-md transition-colors inline-flex items-center gap-1.5',
               selectedAccount === String(a.id)
                 ? 'bg-accent text-accent-foreground font-medium'
                 : 'text-muted-foreground hover:text-foreground hover:bg-muted'
             )}
           >
+            <InstitutionLogo slug={a.institution.slug} name={a.institution.name} size={14} />
             {a.name}
           </button>
         ))}
@@ -454,7 +456,7 @@ export default function Transactions() {
                   <SelectContent>
                     {accounts.map(a => (
                       <SelectItem key={a.id} value={String(a.id)}>
-                        {a.name} — {a.institution.name}
+                        <InstitutionName slug={a.institution.slug} name={a.institution.name} /> — {a.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -563,7 +565,7 @@ export default function Transactions() {
                   <SelectContent>
                     {accounts.map(a => (
                       <SelectItem key={a.id} value={String(a.id)}>
-                        {a.name} — {a.institution.name}
+                        <InstitutionName slug={a.institution.slug} name={a.institution.name} /> — {a.name}
                       </SelectItem>
                     ))}
                   </SelectContent>

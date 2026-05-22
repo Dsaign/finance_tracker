@@ -42,12 +42,13 @@ Nome do produto: **Mirante**.
 - **Componentes customizados:**
   - `CurrencyInput` — input de valor monetário com máscara automática (0.000,00), aceita `prefix`
   - `EmptyState` — estado vazio padronizado com ilustração SVG e mensagem/ação
+  - `InstitutionLogo` / `InstitutionName` — ícone da instituição derivado do slug (`/assets/logos/<slug>.svg`), colorido com `text-primary` via CSS mask; fallback com inicial; `InstitutionName` renderiza logo + nome inline
 - **Páginas conectadas ao backend:**
   - `Dashboard` — gráficos de período e por tag (Recharts), resumo financeiro, progresso de goals
-  - `Transactions` — abas por conta, tabela com altura dinâmica (ResizeObserver), coluna Conta condicional, totais Entradas/Saídas no rodapé, busca, filtro por tipo, paginação com setas, criação/edição de transações via dialog, importação de extrato via dialog (drag-and-drop CSV/OFX); descrições longas truncadas a 55 chars com tooltip
+  - `Transactions` — abas por conta (com logo da instituição), tabela com altura dinâmica (ResizeObserver), coluna Conta condicional, totais Entradas/Saídas + Saldo no rodapé, busca, filtro por tipo, paginação com setas, criação/edição de transações via dialog (com CurrencyInput), importação de extrato via dialog (drag-and-drop CSV/OFX); descrições longas truncadas por CSS com tooltip
   - `Goals` — CRUD completo de objetivos e dívidas (criar/editar/excluir) via modais, barra de progresso, estado vazio com ilustração
   - `Tags` — CRUD de tags (cor, nome) e regras de categorização (keyword)
-  - `Settings` — CRUD de instituições, grupos de contas e contas com dialogs de criação/edição
+  - `Settings` — CRUD de instituições (logo via slug, sem campo manual), grupos de contas e contas com dialogs de criação/edição; `InstitutionName` aplicado em tabelas e selects
 
 ## Próximos passos
 
