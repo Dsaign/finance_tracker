@@ -79,15 +79,6 @@ export interface TransactionListResponse {
 
 // ── Imports ───────────────────────────────────────────────────────────────────
 
-export interface ImportFile {
-  id: number
-  account_id: number
-  filename: string
-  file_hash: string
-  status: 'pending' | 'processing' | 'processed' | 'error'
-  imported_at: string
-}
-
 export interface ImportResult {
   import_file_id: number
   filename: string
@@ -161,12 +152,6 @@ export interface TagShare {
 export interface ByTagResponse {
   total_tagged: string
   shares: TagShare[]
-}
-
-export interface MerchantRow {
-  description: string
-  total: string
-  count: number
 }
 
 export interface GoalProgress {

@@ -30,37 +30,317 @@ function slugify(text: string): string {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[̀-ͯ]/g, '')
+    .replace(/[\u0300-\u036f]/g, '')
     .replace(/[^a-z0-9]+/g, '_')
     .replace(/^_|_$/g, '')
 }
 
-const INST_EMPTY  = { name: '', slug: '', parser_type: '' }
+// ── InstitutionDialog ─────────────────────────────────────────────────────────
+
+const INST_EMPTY = { name: '', slug: '', parser_type: '' }
+
+function InstitutionDialog({ open, editInst, onClose, onSaved }: {
+  open: boolean
+  editInst: Institution | null
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [form, setForm] = useState(INST_EMPTY)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setForm(editInst
+      ? { name: editInst.name, slug: editInst.slug, parser_type: editInst.parser_type }
+      : INST_EMPTY
+    )
+  }, [open, editInst])
+
+  async function handleSave() {
+    if (!form.name || !form.slug || !form.parser_type) {
+      toast.error('Preencha nome, slug e parser.')
+      return
+    }
+    setSaving(true)
+    try {
+      if (editInst) {
+        await api.institutions.update(editInst.id, form)
+        toast.success('Instituição atualizada')
+      } else {
+        await api.institutions.create(form)
+        toast.success('Instituição criada')
+      }
+      onClose()
+      onSaved()
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{editInst ? 'Editar instituição' : 'Nova instituição'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input
+              value={form.name}
+              onChange={e => {
+                const name = e.target.value
+                setForm(f => ({ ...f, name, ...(!editInst && { slug: slugify(name) }) }))
+              }}
+              maxLength={30}
+              placeholder="ex: Nubank"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Slug</Label>
+            <Input
+              value={form.slug}
+              onChange={e => setForm(f => ({ ...f, slug: e.target.value }))}
+              placeholder="ex: nubank"
+              maxLength={30}
+              className="font-mono"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Parser</Label>
+            <Select value={form.parser_type} onValueChange={v => setForm(f => ({ ...f, parser_type: v }))}>
+              <SelectTrigger><SelectValue placeholder="Selecione o parser..." /></SelectTrigger>
+              <SelectContent>
+                {PARSERS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+          <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── AccountGroupDialog ────────────────────────────────────────────────────────
+
 const GROUP_EMPTY = { name: '', description: '' }
-const ACCT_EMPTY  = { name: '', institution_id: '', account_group_id: '', type: '' as AccountType | '', currency: 'BRL', active: true }
+
+function AccountGroupDialog({ open, editGroup, onClose, onSaved }: {
+  open: boolean
+  editGroup: AccountGroup | null
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [form, setForm] = useState(GROUP_EMPTY)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setForm(editGroup
+      ? { name: editGroup.name, description: editGroup.description ?? '' }
+      : GROUP_EMPTY
+    )
+  }, [open, editGroup])
+
+  async function handleSave() {
+    if (!form.name) { toast.error('Preencha o nome do grupo.'); return }
+    setSaving(true)
+    try {
+      const payload = { ...form, description: form.description || null }
+      if (editGroup) {
+        await api.accountGroups.update(editGroup.id, payload)
+        toast.success('Grupo atualizado')
+      } else {
+        await api.accountGroups.create(payload)
+        toast.success('Grupo criado')
+      }
+      onClose()
+      onSaved()
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{editGroup ? 'Editar grupo' : 'Novo grupo de contas'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              placeholder="ex: Pessoa Física"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Descrição <span className="text-xs text-muted-foreground">(opcional)</span></Label>
+            <Input
+              value={form.description}
+              onChange={e => setForm(f => ({ ...f, description: e.target.value }))}
+              placeholder="ex: Contas pessoais"
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+          <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── AccountDialog ─────────────────────────────────────────────────────────────
+
+const ACCT_EMPTY = { name: '', institution_id: '', account_group_id: '', type: '' as AccountType | '', currency: 'BRL', active: true }
+
+function AccountDialog({ open, editAcct, institutions, groups, onClose, onSaved }: {
+  open: boolean
+  editAcct: Account | null
+  institutions: Institution[]
+  groups: AccountGroup[]
+  onClose: () => void
+  onSaved: () => void
+}) {
+  const [form, setForm] = useState(ACCT_EMPTY)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!open) return
+    setForm(editAcct ? {
+      name:             editAcct.name,
+      institution_id:   String(editAcct.institution_id),
+      account_group_id: editAcct.account_group_id ? String(editAcct.account_group_id) : '',
+      type:             editAcct.type,
+      currency:         editAcct.currency,
+      active:           editAcct.active,
+    } : ACCT_EMPTY)
+  }, [open, editAcct])
+
+  async function handleSave() {
+    if (!form.name || !form.institution_id || !form.type) {
+      toast.error('Preencha nome, instituição e tipo.')
+      return
+    }
+    setSaving(true)
+    try {
+      const payload = {
+        name:             form.name,
+        institution_id:   parseInt(form.institution_id),
+        account_group_id: form.account_group_id ? parseInt(form.account_group_id) : null,
+        type:             form.type as AccountType,
+        currency:         form.currency,
+        active:           form.active,
+      }
+      if (editAcct) {
+        await api.accounts.update(editAcct.id, payload)
+        toast.success('Conta atualizada')
+      } else {
+        await api.accounts.create(payload)
+        toast.success('Conta criada')
+      }
+      onClose()
+      onSaved()
+    } catch (e: unknown) {
+      toast.error(e instanceof Error ? e.message : 'Erro')
+    } finally { setSaving(false) }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={v => { if (!v) onClose() }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{editAcct ? 'Editar conta' : 'Nova conta'}</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4 py-2">
+          <div className="space-y-1.5">
+            <Label>Nome</Label>
+            <Input
+              value={form.name}
+              onChange={e => setForm(f => ({ ...f, name: e.target.value }))}
+              maxLength={30}
+              placeholder="ex: Nubank Cartão"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label>Instituição</Label>
+            <Select value={form.institution_id} onValueChange={v => setForm(f => ({ ...f, institution_id: v }))}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                {institutions.map(i => (
+                  <SelectItem key={i.id} value={String(i.id)}>
+                    <InstitutionName slug={i.slug} name={i.name} />
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Tipo</Label>
+            <Select value={form.type} onValueChange={v => setForm(f => ({ ...f, type: v as AccountType }))}>
+              <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
+              <SelectContent>
+                {ACCOUNT_TYPES.map(([value, label]) => (
+                  <SelectItem key={value} value={value}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label>Grupo <span className="text-xs text-muted-foreground">(opcional)</span></Label>
+            <Select
+              value={form.account_group_id || '_none'}
+              onValueChange={v => setForm(f => ({ ...f, account_group_id: v === '_none' ? '' : v }))}
+            >
+              <SelectTrigger><SelectValue placeholder="Sem grupo" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="_none">Sem grupo</SelectItem>
+                {groups.map(g => <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center justify-between py-1">
+            <Label>Conta ativa</Label>
+            <Switch
+              checked={form.active}
+              onCheckedChange={v => setForm(f => ({ ...f, active: v }))}
+            />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
+          <Button onClick={handleSave} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ── Settings page ─────────────────────────────────────────────────────────────
 
 export default function Settings() {
   const [loading, setLoading] = useState(true)
-  const [saving,  setSaving]  = useState(false)
 
   const [institutions, setInstitutions] = useState<Institution[]>([])
   const [groups,       setGroups]       = useState<AccountGroup[]>([])
   const [accounts,     setAccounts]     = useState<Account[]>([])
 
-  // Institution dialog
-  const [instOpen, setInstOpen] = useState(false)
-  const [editInst, setEditInst] = useState<Institution | null>(null)
-  const [instForm, setInstForm] = useState(INST_EMPTY)
+  const [instOpen,  setInstOpen]  = useState(false)
+  const [editInst,  setEditInst]  = useState<Institution | null>(null)
 
-  // Account group dialog
   const [groupOpen, setGroupOpen] = useState(false)
   const [editGroup, setEditGroup] = useState<AccountGroup | null>(null)
-  const [groupForm, setGroupForm] = useState(GROUP_EMPTY)
 
-  // Account dialog
-  const [acctOpen, setAcctOpen] = useState(false)
-  const [editAcct, setEditAcct] = useState<Account | null>(null)
-  const [acctForm, setAcctForm] = useState(ACCT_EMPTY)
+  const [acctOpen,  setAcctOpen]  = useState(false)
+  const [editAcct,  setEditAcct]  = useState<Account | null>(null)
 
   function loadAll() {
     return Promise.all([
@@ -74,37 +354,6 @@ export default function Settings() {
     loadAll().catch(e => toast.error(e.message)).finally(() => setLoading(false))
   }, [])
 
-  // ── Institution ─────────────────────────────────────────────────────────────
-
-  function openInstCreate() {
-    setEditInst(null); setInstForm(INST_EMPTY); setInstOpen(true)
-  }
-  function openInstEdit(inst: Institution) {
-    setEditInst(inst)
-    setInstForm({ name: inst.name, slug: inst.slug, parser_type: inst.parser_type })
-    setInstOpen(true)
-  }
-  async function submitInst() {
-    if (!instForm.name || !instForm.slug || !instForm.parser_type) {
-      toast.error('Preencha nome, slug e parser.')
-      return
-    }
-    setSaving(true)
-    try {
-      const payload = instForm
-      if (editInst) {
-        await api.institutions.update(editInst.id, payload)
-        toast.success('Instituição atualizada')
-      } else {
-        await api.institutions.create(payload)
-        toast.success('Instituição criada')
-      }
-      setInstOpen(false)
-      await loadAll()
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Erro')
-    } finally { setSaving(false) }
-  }
   async function deleteInst(inst: Institution) {
     if (!confirm(`Excluir "${inst.name}"? Contas vinculadas serão afetadas.`)) return
     try {
@@ -114,34 +363,6 @@ export default function Settings() {
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : 'Erro') }
   }
 
-  // ── Account Group ───────────────────────────────────────────────────────────
-
-  function openGroupCreate() {
-    setEditGroup(null); setGroupForm(GROUP_EMPTY); setGroupOpen(true)
-  }
-  function openGroupEdit(group: AccountGroup) {
-    setEditGroup(group)
-    setGroupForm({ name: group.name, description: group.description ?? '' })
-    setGroupOpen(true)
-  }
-  async function submitGroup() {
-    if (!groupForm.name) { toast.error('Preencha o nome do grupo.'); return }
-    setSaving(true)
-    try {
-      const payload = { ...groupForm, description: groupForm.description || null }
-      if (editGroup) {
-        await api.accountGroups.update(editGroup.id, payload)
-        toast.success('Grupo atualizado')
-      } else {
-        await api.accountGroups.create(payload)
-        toast.success('Grupo criado')
-      }
-      setGroupOpen(false)
-      await loadAll()
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Erro')
-    } finally { setSaving(false) }
-  }
   async function deleteGroup(group: AccountGroup) {
     if (!confirm(`Excluir grupo "${group.name}"?`)) return
     try {
@@ -151,51 +372,6 @@ export default function Settings() {
     } catch (e: unknown) { toast.error(e instanceof Error ? e.message : 'Erro') }
   }
 
-  // ── Account ─────────────────────────────────────────────────────────────────
-
-  function openAcctCreate() {
-    setEditAcct(null); setAcctForm(ACCT_EMPTY); setAcctOpen(true)
-  }
-  function openAcctEdit(acct: Account) {
-    setEditAcct(acct)
-    setAcctForm({
-      name: acct.name,
-      institution_id: String(acct.institution_id),
-      account_group_id: acct.account_group_id ? String(acct.account_group_id) : '',
-      type: acct.type,
-      currency: acct.currency,
-      active: acct.active,
-    })
-    setAcctOpen(true)
-  }
-  async function submitAcct() {
-    if (!acctForm.name || !acctForm.institution_id || !acctForm.type) {
-      toast.error('Preencha nome, instituição e tipo.')
-      return
-    }
-    setSaving(true)
-    try {
-      const payload = {
-        name: acctForm.name,
-        institution_id: parseInt(acctForm.institution_id),
-        account_group_id: acctForm.account_group_id ? parseInt(acctForm.account_group_id) : null,
-        type: acctForm.type as AccountType,
-        currency: acctForm.currency,
-        active: acctForm.active,
-      }
-      if (editAcct) {
-        await api.accounts.update(editAcct.id, payload)
-        toast.success('Conta atualizada')
-      } else {
-        await api.accounts.create(payload)
-        toast.success('Conta criada')
-      }
-      setAcctOpen(false)
-      await loadAll()
-    } catch (e: unknown) {
-      toast.error(e instanceof Error ? e.message : 'Erro')
-    } finally { setSaving(false) }
-  }
   async function deleteAcct(acct: Account) {
     if (!confirm(`Excluir conta "${acct.name}"?`)) return
     try {
@@ -220,11 +396,12 @@ export default function Settings() {
           <UnderlineTabsTrigger value="accounts">Contas</UnderlineTabsTrigger>
         </UnderlineTabsList>
 
-        {/* ── Instituições ─────────────────────────────────────────────────── */}
         <UnderlineTabsContent value="institutions" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">{institutions.length} instituição(ões) cadastrada(s)</p>
-            <Button size="sm" onClick={openInstCreate}><Plus size={14} /> Nova instituição</Button>
+            <Button size="sm" onClick={() => { setEditInst(null); setInstOpen(true) }}>
+              <Plus size={14} /> Nova instituição
+            </Button>
           </div>
           <Card>
             <CardContent className="p-0">
@@ -250,7 +427,7 @@ export default function Settings() {
                       <td className="px-4 py-3 text-muted-foreground">{PARSERS.find(p => p.value === inst.parser_type)?.label ?? inst.parser_type}</td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openInstEdit(inst)}><Pencil size={13} /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditInst(inst); setInstOpen(true) }}><Pencil size={13} /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-rose-500" onClick={() => deleteInst(inst)}><Trash2 size={13} /></Button>
                         </div>
                       </td>
@@ -262,11 +439,12 @@ export default function Settings() {
           </Card>
         </UnderlineTabsContent>
 
-        {/* ── Grupos de contas ─────────────────────────────────────────────── */}
         <UnderlineTabsContent value="groups" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">{groups.length} grupo(s) cadastrado(s)</p>
-            <Button size="sm" onClick={openGroupCreate}><Plus size={14} /> Novo grupo</Button>
+            <Button size="sm" onClick={() => { setEditGroup(null); setGroupOpen(true) }}>
+              <Plus size={14} /> Novo grupo
+            </Button>
           </div>
           <Card>
             <CardContent className="p-0">
@@ -288,7 +466,7 @@ export default function Settings() {
                       <td className="px-4 py-3 text-muted-foreground">{group.description ?? '—'}</td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openGroupEdit(group)}><Pencil size={13} /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditGroup(group); setGroupOpen(true) }}><Pencil size={13} /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-rose-500" onClick={() => deleteGroup(group)}><Trash2 size={13} /></Button>
                         </div>
                       </td>
@@ -300,11 +478,12 @@ export default function Settings() {
           </Card>
         </UnderlineTabsContent>
 
-        {/* ── Contas ───────────────────────────────────────────────────────── */}
         <UnderlineTabsContent value="accounts" className="mt-6 space-y-4">
           <div className="flex justify-between items-center">
             <p className="text-sm text-muted-foreground">{accounts.length} conta(s) cadastrada(s)</p>
-            <Button size="sm" onClick={openAcctCreate}><Plus size={14} /> Nova conta</Button>
+            <Button size="sm" onClick={() => { setEditAcct(null); setAcctOpen(true) }}>
+              <Plus size={14} /> Nova conta
+            </Button>
           </div>
           <Card>
             <CardContent className="p-0">
@@ -336,7 +515,7 @@ export default function Settings() {
                       </td>
                       <td className="px-4 py-3">
                         <div className="flex justify-end gap-1">
-                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openAcctEdit(acct)}><Pencil size={13} /></Button>
+                          <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => { setEditAcct(acct); setAcctOpen(true) }}><Pencil size={13} /></Button>
                           <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-rose-500" onClick={() => deleteAcct(acct)}><Trash2 size={13} /></Button>
                         </div>
                       </td>
@@ -349,150 +528,26 @@ export default function Settings() {
         </UnderlineTabsContent>
       </UnderlineTabs>
 
-      {/* ── Dialog: Instituição ───────────────────────────────────────────────── */}
-      <Dialog open={instOpen} onOpenChange={setInstOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editInst ? 'Editar instituição' : 'Nova instituição'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Nome</Label>
-              <Input
-                value={instForm.name}
-                onChange={e => {
-                  const name = e.target.value
-                  setInstForm(f => ({ ...f, name, ...(!editInst && { slug: slugify(name) }) }))
-                }}
-                maxLength={30}
-                placeholder="ex: Nubank"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Slug</Label>
-              <Input
-                value={instForm.slug}
-                onChange={e => setInstForm(f => ({ ...f, slug: e.target.value }))}
-                placeholder="ex: nubank"
-                maxLength={30}
-                className="font-mono"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Parser</Label>
-              <Select value={instForm.parser_type} onValueChange={v => setInstForm(f => ({ ...f, parser_type: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione o parser..." /></SelectTrigger>
-                <SelectContent>
-                  {PARSERS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
-            <Button onClick={submitInst} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Grupo de contas ───────────────────────────────────────────── */}
-      <Dialog open={groupOpen} onOpenChange={setGroupOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editGroup ? 'Editar grupo' : 'Novo grupo de contas'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Nome</Label>
-              <Input
-                value={groupForm.name}
-                onChange={e => setGroupForm(f => ({ ...f, name: e.target.value }))}
-                placeholder="ex: Pessoa Física"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Descrição <span className="text-xs text-muted-foreground">(opcional)</span></Label>
-              <Input
-                value={groupForm.description}
-                onChange={e => setGroupForm(f => ({ ...f, description: e.target.value }))}
-                placeholder="ex: Contas pessoais"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
-            <Button onClick={submitGroup} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Conta ─────────────────────────────────────────────────────── */}
-      <Dialog open={acctOpen} onOpenChange={setAcctOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>{editAcct ? 'Editar conta' : 'Nova conta'}</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-1.5">
-              <Label>Nome</Label>
-              <Input
-                value={acctForm.name}
-                onChange={e => setAcctForm(f => ({ ...f, name: e.target.value }))}
-                maxLength={30}
-                placeholder="ex: Nubank Cartão"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Instituição</Label>
-              <Select value={acctForm.institution_id} onValueChange={v => setAcctForm(f => ({ ...f, institution_id: v }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {institutions.map(i => (
-                    <SelectItem key={i.id} value={String(i.id)}>
-                      <InstitutionName slug={i.slug} name={i.name} />
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Tipo</Label>
-              <Select value={acctForm.type} onValueChange={v => setAcctForm(f => ({ ...f, type: v as AccountType }))}>
-                <SelectTrigger><SelectValue placeholder="Selecione..." /></SelectTrigger>
-                <SelectContent>
-                  {ACCOUNT_TYPES.map(([value, label]) => (
-                    <SelectItem key={value} value={value}>{label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label>Grupo <span className="text-xs text-muted-foreground">(opcional)</span></Label>
-              <Select
-                value={acctForm.account_group_id || '_none'}
-                onValueChange={v => setAcctForm(f => ({ ...f, account_group_id: v === '_none' ? '' : v }))}
-              >
-                <SelectTrigger><SelectValue placeholder="Sem grupo" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="_none">Sem grupo</SelectItem>
-                  {groups.map(g => <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="flex items-center justify-between py-1">
-              <Label>Conta ativa</Label>
-              <Switch
-                checked={acctForm.active}
-                onCheckedChange={v => setAcctForm(f => ({ ...f, active: v }))}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild><Button variant="outline">Cancelar</Button></DialogClose>
-            <Button onClick={submitAcct} disabled={saving}>{saving ? 'Salvando...' : 'Salvar'}</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <InstitutionDialog
+        open={instOpen}
+        editInst={editInst}
+        onClose={() => setInstOpen(false)}
+        onSaved={() => loadAll()}
+      />
+      <AccountGroupDialog
+        open={groupOpen}
+        editGroup={editGroup}
+        onClose={() => setGroupOpen(false)}
+        onSaved={() => loadAll()}
+      />
+      <AccountDialog
+        open={acctOpen}
+        editAcct={editAcct}
+        institutions={institutions}
+        groups={groups}
+        onClose={() => setAcctOpen(false)}
+        onSaved={() => loadAll()}
+      />
     </div>
   )
 }

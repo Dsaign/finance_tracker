@@ -231,59 +231,61 @@ function GoalDialog({
     setDebt(prev => ({ ...prev, [field]: value }))
   }
 
+  async function submitEdit(goal: Goal) {
+    const goalPayload: Record<string, unknown> = {
+      name:        form.name,
+      description: form.description || null,
+      status:      form.status,
+      deadline:    form.deadline || null,
+    }
+    if (!isDebt) goalPayload.target_amount = form.target_amount
+    const updated = await api.goals.update(goal.id, goalPayload)
+
+    if (isDebt && goal.debt) {
+      const debtPayload: Record<string, unknown> = {
+        creditor:          debt.creditor || null,
+        current_balance:   debt.current_balance || null,
+        interest_rate:     debt.interest_rate || null,
+        installments_paid: debt.installments_paid ? parseInt(debt.installments_paid) : null,
+        due_date:          debt.due_date || null,
+      }
+      onSaved(await api.goals.updateDebt(goal.id, debtPayload))
+    } else {
+      onSaved(updated)
+    }
+    toast.success('Objetivo atualizado')
+  }
+
+  async function submitCreate() {
+    const payload: Record<string, unknown> = {
+      name:          form.name,
+      description:   form.description || null,
+      goal_type:     form.goal_type,
+      target_amount: isDebt ? (debt.original_amount || '0') : form.target_amount,
+      deadline:      form.deadline || null,
+    }
+    if (isDebt) {
+      payload.debt = {
+        creditor:           debt.creditor,
+        original_amount:    debt.original_amount,
+        current_balance:    debt.current_balance || debt.original_amount,
+        interest_rate:      debt.interest_rate || null,
+        installments_total: debt.installments_total ? parseInt(debt.installments_total) : null,
+        installments_paid:  debt.installments_paid ? parseInt(debt.installments_paid) : null,
+        start_date:         debt.start_date || null,
+        due_date:           debt.due_date || null,
+      }
+    }
+    onSaved(await api.goals.create(payload))
+    toast.success('Objetivo criado')
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setSaving(true)
     try {
-      if (isEdit && editGoal) {
-        const goalPayload: Record<string, unknown> = {
-          name:        form.name,
-          description: form.description || null,
-          status:      form.status,
-          deadline:    form.deadline || null,
-        }
-        if (!isDebt) goalPayload.target_amount = form.target_amount
-
-        const updated = await api.goals.update(editGoal.id, goalPayload)
-
-        if (isDebt && editGoal.debt) {
-          const debtPayload: Record<string, unknown> = {
-            creditor:          debt.creditor || null,
-            current_balance:   debt.current_balance || null,
-            interest_rate:     debt.interest_rate || null,
-            installments_paid: debt.installments_paid ? parseInt(debt.installments_paid) : null,
-            due_date:          debt.due_date || null,
-          }
-          const withDebt = await api.goals.updateDebt(editGoal.id, debtPayload)
-          onSaved(withDebt)
-        } else {
-          onSaved(updated)
-        }
-        toast.success('Objetivo atualizado')
-      } else {
-        const payload: Record<string, unknown> = {
-          name:         form.name,
-          description:  form.description || null,
-          goal_type:    form.goal_type,
-          target_amount: isDebt ? (debt.original_amount || '0') : form.target_amount,
-          deadline:     form.deadline || null,
-        }
-        if (isDebt) {
-          payload.debt = {
-            creditor:           debt.creditor,
-            original_amount:    debt.original_amount,
-            current_balance:    debt.current_balance || debt.original_amount,
-            interest_rate:      debt.interest_rate || null,
-            installments_total: debt.installments_total ? parseInt(debt.installments_total) : null,
-            installments_paid:  debt.installments_paid ? parseInt(debt.installments_paid) : null,
-            start_date:         debt.start_date || null,
-            due_date:           debt.due_date || null,
-          }
-        }
-        const created = await api.goals.create(payload)
-        onSaved(created)
-        toast.success('Objetivo criado')
-      }
+      if (isEdit && editGoal) await submitEdit(editGoal)
+      else await submitCreate()
       onClose()
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Erro ao salvar objetivo')
@@ -300,7 +302,6 @@ function GoalDialog({
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-4 py-2">
-          {/* Basic fields */}
           <div className="space-y-2">
             <Label htmlFor="goal-name">Nome <span className="text-primary">*</span></Label>
             <Input
@@ -356,7 +357,6 @@ function GoalDialog({
             )}
           </div>
 
-          {/* Non-debt fields */}
           {!isDebt && (
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-2">
@@ -382,7 +382,6 @@ function GoalDialog({
             </div>
           )}
 
-          {/* Debt fields */}
           {isDebt && (
             <div className="space-y-3 border rounded-lg p-3 bg-muted/30">
               <p className="text-sm font-medium text-muted-foreground">Dados da dívida</p>
@@ -593,7 +592,7 @@ export default function Goals() {
 
       {inactive.length > 0 && (
         <section>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Concluídos / Pausados</h2>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-3">Concluídos / Pausados / Cancelados</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {inactive.map(g => (
               <GoalCard key={g.id} goal={g} onEdit={openEdit} onDelete={setDeleteGoal} />
