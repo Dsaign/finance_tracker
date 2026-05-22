@@ -13,14 +13,16 @@ Aplicação pessoal de controle financeiro com importação de extratos bancári
 
 ## Funcionalidades
 
-- Importação de extratos exportados diretamente dos bancos
-- Categorização automática por tags via regras de keyword
-- Edição manual de transações (independente da importação)
-- Extrato com busca por descrição, tag, período e conta
-- Gráficos de entrada/saída por período e categoria
-- Visão consolidada multi-conta (com filtro por grupo de contas)
-- Objetivos financeiros (poupança, limite de gastos, quitação de dívidas)
-- Gestão de dívidas com credor, juros e parcelas
+- Importação de extratos bancários via dialog (CSV Nubank, OFX Bradesco) com drag-and-drop e deduplicação automática
+- Extrato com abas por conta, busca, filtro por tipo, totais de Entradas/Saídas e paginação adaptativa
+- Criação e edição manual de transações (independente da importação)
+- Categorização automática por tags via regras de keyword; edição manual de tags por transação
+- Gráficos de entrada/saída por período e categoria (Recharts)
+- Visão consolidada multi-conta
+- Objetivos financeiros com CRUD completo (poupança, limite de gastos, quitação de dívidas)
+- Gestão de dívidas com credor, juros, parcelas e progresso
+- Configurações: CRUD de instituições, grupos de contas e contas
+- Dark mode com persistência
 
 ---
 
@@ -29,6 +31,7 @@ Aplicação pessoal de controle financeiro com importação de extratos bancári
 ```
 finance_tracker/
 ├── README.md
+├── CLAUDE.md                   ← contexto para Claude Code
 ├── backend/
 │   ├── alembic.ini
 │   ├── .env                    ← criado a partir do .env.example (não versionar)
@@ -37,28 +40,30 @@ finance_tracker/
 │   ├── app/
 │   │   ├── main.py             ← entrypoint FastAPI
 │   │   ├── models/             ← models SQLAlchemy
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py
-│   │   │   ├── institution.py
-│   │   │   ├── account.py
-│   │   │   ├── import_file.py
-│   │   │   ├── tag.py
-│   │   │   ├── transaction.py
-│   │   │   └── goal.py
+│   │   │   ├── institution.py, account.py, import_file.py
+│   │   │   ├── tag.py, transaction.py, goal.py
 │   │   ├── parsers/            ← leitores de extrato por instituição
-│   │   │   ├── __init__.py
-│   │   │   ├── base.py         ← interface comum
+│   │   │   ├── base.py         ← interface comum (BaseParser)
 │   │   │   ├── nubank.py       ← CSV (date, title, amount)
 │   │   │   └── bradesco.py     ← OFX
-│   │   ├── routers/            ← endpoints FastAPI (a criar)
-│   │   ├── schemas/            ← Pydantic schemas (a criar)
-│   │   └── services/           ← lógica de negócio (a criar)
+│   │   ├── routers/            ← endpoints FastAPI
+│   │   │   ├── institutions.py, accounts.py, transactions.py
+│   │   │   ├── imports.py, tags.py, goals.py, dashboard.py
+│   │   ├── schemas/            ← Pydantic schemas
+│   │   │   ├── transaction.py, goal.py, tag.py, ...
 │   └── migrations/
-│       ├── env.py
-│       ├── script.py.mako
 │       └── versions/
-│           └── 4c265bcc3438_initial_schema.py
-└── frontend/                   ← React + TypeScript (a criar)
+└── frontend/
+    └── src/
+        ├── api/                ← cliente Axios + chamadas tipadas
+        ├── components/
+        │   ├── ui/             ← shadcn/ui + CurrencyInput + EmptyState
+        │   └── Layout.tsx
+        ├── pages/
+        │   ├── Dashboard.tsx, Transactions.tsx, Goals.tsx
+        │   ├── Tags.tsx, Settings.tsx
+        ├── types/index.ts
+        └── lib/utils.ts
 ```
 
 ---
@@ -87,6 +92,15 @@ pip install -r requirements.txt
 # Configure as variáveis de ambiente
 cp .env.example .env
 # Edite o .env com suas credenciais do MySQL
+```
+
+### 3. Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev                      # http://localhost:5173
+# Proxy automático: /api/* → http://localhost:8000
 ```
 
 ### 3. Banco de dados
@@ -188,25 +202,24 @@ Para adicionar uma nova instituição:
 
 ## Progresso do desenvolvimento
 
-### Backend
-- [x] Modelagem do banco de dados
-- [x] Models SQLAlchemy + Migrations Alembic
+### Backend — completo
+- [x] Modelagem do banco de dados + Migrations Alembic
 - [x] Parsers de importação (Nubank CSV, Bradesco OFX)
 - [x] Endpoints de instituições e contas
-- [x] Endpoints de transações (listagem com filtros, CRUD)
+- [x] Endpoints de transações (listagem com filtros, CRUD, totais income/expense)
 - [x] Endpoint de importação de extrato (upload, parse, deduplicação)
 - [x] Endpoints de tags e regras de categorização
 - [x] Endpoints de objetivos e dívidas
 - [x] Endpoints de dashboard (resumo, por período, por tag, top merchants)
 
-### Frontend
+### Frontend — completo
 - [x] Estrutura React + TypeScript + Vite + Tailwind v4 + shadcn/ui
-- [x] Tema Mirante (logo, favicon, dark mode com persistência)
+- [x] Tema Mirante (logo, favicon, dark mode, faixa primária no topo)
 - [x] Cliente HTTP integrado ao backend (`/api/v1`)
-- [x] Importação de extrato (drag-and-drop, CSV/OFX, resultado com contadores)
-- [x] Extrato com busca por descrição, filtro por tipo e paginação
-- [x] Dashboard com gráficos (Recharts)
-- [x] Gestão de objetivos e dívidas
-- [x] Gestão de tags e regras de categorização
+- [x] Dashboard com gráficos (Recharts) e resumo financeiro
+- [x] Extrato: abas por conta, tabela adaptativa, totais Entradas/Saídas, paginação, CRUD de transações
+- [x] Importação de extrato via dialog no Extrato (drag-and-drop CSV/OFX)
+- [x] Objetivos: CRUD completo (criar/editar/excluir), barra de progresso, estado vazio
+- [x] Tags e regras de categorização (CRUD)
 - [x] Configurações (CRUD de instituições, contas e grupos)
-- [x] Criação e edição manual de transações
+- [x] Componentes: `CurrencyInput` com máscara BRL, `EmptyState` com ilustração SVG

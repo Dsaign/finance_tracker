@@ -24,7 +24,7 @@ Nome do produto: **Mirante**.
 - `schemas/` — Pydantic schemas para todas as entidades
 - `routers/institutions.py` — CRUD de instituições
 - `routers/accounts.py` — CRUD de contas e grupos de contas
-- `routers/transactions.py` — listagem com filtros, criação, atualização, exclusão
+- `routers/transactions.py` — listagem com filtros (account_id, flow, search), CRUD, retorna `total_income` e `total_expense` na resposta
 - `routers/imports.py` — upload, parse, deduplicação e persistência
 - `routers/tags.py` — CRUD de tags e regras de categorização
 - `routers/goals.py` — CRUD de objetivos e dívidas
@@ -32,25 +32,26 @@ Nome do produto: **Mirante**.
 - `main.py` — FastAPI com CORS, todas as rotas em `/api/v1`
 - Migrations Alembic com `utf8mb4_unicode_ci` em todas as tabelas
 
-### Frontend (`frontend/src/`) — quase completo
+### Frontend (`frontend/src/`) — completo
 - **Infraestrutura:** Vite proxy `/api` → `http://localhost:8000`, cliente Axios (`api/client.ts`)
 - **API client:** `api/index.ts` — todas as chamadas mapeadas para os endpoints do backend
 - **Tipos:** `types/index.ts` — interfaces TypeScript alinhadas com os schemas Pydantic
-- **Tema Mirante:** logo SVG (Quicksand), favicon com triângulo + M, dark mode com persistência
-- **Layout:** sidebar com navegação, tokens de cor semânticos, Tailwind v4 canônico
+- **Tema Mirante:** logo SVG (Quicksand), favicon com triângulo + M, dark mode com persistência, faixa primária de 3px no topo do layout
+- **Layout:** sidebar com navegação (sem item Importar), tokens de cor semânticos, Tailwind v4 canônico
 - **Componentes UI:** shadcn/ui completos com named imports e `type` imports
+- **Componentes customizados:**
+  - `CurrencyInput` — input de valor monetário com máscara automática (0.000,00), aceita `prefix`
+  - `EmptyState` — estado vazio padronizado com ilustração SVG e mensagem/ação
 - **Páginas conectadas ao backend:**
   - `Dashboard` — gráficos de período e por tag (Recharts), resumo financeiro, progresso de goals
-  - `Transactions` — extrato com busca, filtro por tipo, paginação, exclusão de transação
-  - `Import` — seleção de conta, drag-and-drop de CSV/OFX, resultado com contadores de inserção/duplicatas
-  - `Goals` — listagem de objetivos e dívidas com barra de progresso
+  - `Transactions` — abas por conta, tabela com altura dinâmica (ResizeObserver), coluna Conta condicional, totais Entradas/Saídas no rodapé, busca, filtro por tipo, paginação com setas, criação/edição de transações via dialog, importação de extrato via dialog (drag-and-drop CSV/OFX)
+  - `Goals` — CRUD completo de objetivos e dívidas (criar/editar/excluir) via modais, barra de progresso, estado vazio com ilustração
   - `Tags` — CRUD de tags (cor, nome) e regras de categorização (keyword)
-- **Páginas conectadas ao backend (todas):**
   - `Settings` — CRUD de instituições, grupos de contas e contas com dialogs de criação/edição
 
 ## Próximos passos
 
-- [x] Criar/editar objetivos via UI (modal de formulário)
+Sem pendências mapeadas no momento.
 
 ## Ambiente de desenvolvimento
 
