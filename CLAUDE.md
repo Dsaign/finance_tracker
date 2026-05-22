@@ -48,7 +48,7 @@ Nome do produto: **Mirante**.
   - `Transactions` — abas por conta (com logo da instituição), tabela com altura dinâmica (ResizeObserver), coluna Conta condicional, totais Entradas/Saídas + Saldo no rodapé, busca, filtro por tipo, paginação com setas, criação/edição de transações via dialog (com CurrencyInput), importação de extrato via dialog (drag-and-drop CSV/OFX); descrições longas truncadas por CSS com tooltip
   - `Goals` — CRUD completo de objetivos e dívidas (criar/editar/excluir) via modais, barra de progresso, estado vazio com ilustração
   - `Tags` — CRUD de tags (cor, nome) e regras de categorização (keyword)
-  - `Settings` — CRUD de instituições (logo via slug, sem campo manual), grupos de contas e contas com dialogs de criação/edição; `InstitutionName` aplicado em tabelas e selects
+  - `Settings` — CRUD de instituições (logo via slug, sem campo manual), grupos de contas e contas com dialogs de criação/edição; `InstitutionName` aplicado em tabelas e selects; abas com indicador deslizante animado (mesmo padrão do Extrato)
 
 ## Próximos passos
 
