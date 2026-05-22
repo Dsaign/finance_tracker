@@ -23,6 +23,7 @@ class TransactionResponse(BaseModel):
     flow: TransactionFlow
     external_id: str | None
     is_manual: bool
+    competencia: str | None
     tags: list[TagResponse]
     created_at: datetime.datetime
     updated_at: datetime.datetime | None
@@ -45,6 +46,7 @@ class TransactionCreate(BaseModel):
     description: str
     amount: Decimal
     flow: TransactionFlow
+    competencia: str | None = None
     tag_ids: list[int] = []
 
     @field_validator("amount")
@@ -60,6 +62,7 @@ class TransactionUpdate(BaseModel):
     description: str | None = None
     amount: Decimal | None = None
     flow: TransactionFlow | None = None
+    competencia: str | None = None
     # None = não altera; [] = remove todas as tags
     tag_ids: list[int] | None = None
 

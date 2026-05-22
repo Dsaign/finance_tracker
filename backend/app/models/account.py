@@ -1,5 +1,7 @@
 import enum
-from sqlalchemy import String, Text, Boolean, ForeignKey, Enum
+import datetime
+from decimal import Decimal
+from sqlalchemy import String, Text, Boolean, Date, ForeignKey, Enum, Numeric
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base, TimestampMixin
 
@@ -58,6 +60,10 @@ class Account(Base, TimestampMixin):
         String(3), nullable=False, default="BRL"
     )
     active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    opening_balance: Mapped[Decimal] = mapped_column(
+        Numeric(precision=15, scale=2), nullable=False, default=Decimal("0.00")
+    )
+    opening_date: Mapped[datetime.date | None] = mapped_column(Date, nullable=True)
 
     # Relacionamentos
     institution: Mapped["Institution"] = relationship(
