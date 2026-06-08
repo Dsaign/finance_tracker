@@ -20,11 +20,17 @@ function TagBadge({ tag }: { tag: Tag }) {
   )
 }
 
+const PRESET_COLORS = [
+  '#ef4444', '#f97316', '#eab308', '#22c55e',
+  '#14b8a6', '#3b82f6', '#8b5cf6', '#ec4899',
+  '#6b7280',
+]
+
 export default function Tags() {
   const [tags, setTags]   = useState<Tag[]>([])
   const [rules, setRules] = useState<CategoryRule[]>([])
   const [loading, setLoading] = useState(true)
-  const [newTag, setNewTag]   = useState({ name: '', color: '#33a95a' })
+  const [newTag, setNewTag]   = useState({ name: '', color: '#22c55e' })
 
   function loadAll() {
     return Promise.all([
@@ -41,7 +47,7 @@ export default function Tags() {
     if (!newTag.name.trim()) return
     try {
       await api.tags.create(newTag)
-      setNewTag({ name: '', color: '#33a95a' })
+      setNewTag({ name: '', color: '#22c55e' })
       await loadAll()
       toast.success('Tag criada')
     } catch (e: unknown) {
@@ -81,26 +87,56 @@ export default function Tags() {
 
       {/* Criar tag */}
       <Card>
-        <CardHeader><CardTitle className="text-sm">Nova tag</CardTitle></CardHeader>
+        <CardHeader>
+          <CardTitle className="text-sm">
+            Nova tag
+            <span
+              className="inline-flex ml-5 items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white shrink-0"
+              style={{ backgroundColor: newTag.color }}
+            >
+              {newTag.name || 'Preview'}
+            </span>
+          </CardTitle>
+        </CardHeader>
         <CardContent>
-          <div className="flex gap-3 items-end">
+          <div className="flex gap-4 items-end">
             <div className="flex-1 space-y-1.5">
               <Label>Nome</Label>
-              <Input
-                value={newTag.name}
-                onChange={e => setNewTag(t => ({ ...t, name: e.target.value }))}
-                onKeyDown={e => e.key === 'Enter' && createTag()}
-                placeholder="ex: Alimentação"
-              />
+              <div className="flex items-center gap-2">
+                <Input
+                  value={newTag.name}
+                  onChange={e => setNewTag(t => ({ ...t, name: e.target.value.trimStart() }))}
+                  onKeyDown={e => e.key === 'Enter' && createTag()}
+                  placeholder="ex: Alimentação"
+                />
+              </div>
             </div>
             <div className="space-y-1.5">
               <Label>Cor</Label>
-              <input
-                type="color"
-                value={newTag.color}
-                onChange={e => setNewTag(t => ({ ...t, color: e.target.value }))}
-                className="h-9 w-14 rounded-md border border-input bg-background cursor-pointer px-1"
-              />
+              <div className="flex items-center gap-1.5">
+                {PRESET_COLORS.map(c => (
+                  <button
+                    type="button"
+                    key={c}
+                    title={c}
+                    className={`w-6 h-6 cursor-pointer rounded-full transition-all focus:outline-none ${newTag.color === c ? 'ring-0 ring-offset-1 ring-foreground scale-110' : 'hover:scale-110'}`}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setNewTag(t => ({ ...t, color: c }))}
+                  />
+                ))}
+                <label
+                  title="Cor personalizada"
+                  className={`w-6 h-6 text-center rounded-full cursor-pointer transition-all relative overflow-hidden focus-within:outline-none ring-0 ring-offset-1 ring-foreground scale-110`}
+                  style={{ backgroundColor: newTag.color }}
+                >+
+                  <input
+                    type="color"
+                    value={newTag.color}
+                    onChange={e => setNewTag(t => ({ ...t, color: e.target.value }))}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                  />
+                </label>
+              </div>
             </div>
             <Button onClick={createTag} size="sm">
               <Plus size={14} className="mr-1" /> Criar

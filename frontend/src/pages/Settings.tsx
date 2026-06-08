@@ -509,7 +509,7 @@ export default function Settings() {
                       </td>
                       <td className="px-4 py-3 text-muted-foreground">{ACCOUNT_TYPE_LABEL[acct.type]}</td>
                       <td className="px-4 py-3">
-                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${acct.active ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-muted text-muted-foreground'}`}>
+                        <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${acct.active ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-rose-500/15 text-rose-600 dark:text-rose-400'}`}>
                           {acct.active ? 'Ativa' : 'Inativa'}
                         </span>
                       </td>

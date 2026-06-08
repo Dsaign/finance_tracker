@@ -18,7 +18,7 @@ import type { Account, Tag, Transaction, TransactionFlow, TransactionListRespons
 const FLOW_COLOR: Record<string, string> = {
   income:   'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
   expense:  'bg-rose-500/15 text-rose-600 dark:text-rose-400',
-  payment:  'bg-muted text-muted-foreground',
+  payment:  'bg-background text-foreground border border-border',
   transfer: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
 }
 
@@ -285,6 +285,15 @@ export default function Transactions() {
               </div>
             ) : (
               <table className="w-full text-sm">
+                <colgroup>
+                  <col style={{ width: 100 }} />
+                  <col />
+                  {showAccountCol && <col style={{ width: 130 }} />}
+                  <col />
+                  <col style={{ width: 100 }} />
+                  <col style={{ width: 140 }} />
+                  <col style={{ width: 60 }} />
+                </colgroup>
                 <thead>
                   <tr className="border-b border-border text-muted-foreground text-xs uppercase tracking-wide">
                     <th className="px-4 py-1.5 text-left font-medium">Data</th>
@@ -399,7 +408,7 @@ export default function Transactions() {
             <div className="flex flex-col items-end pl-4 border-l border-border">
               <span className="text-xs text-muted-foreground">Saldo</span>
               <span className={`text-sm font-medium tabular-nums ${balance >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
-                {balance >= 0 ? '+' : ''}{formatBRL(String(Math.abs(balance)))}
+                {balance >= 0 ? '+' : '-'}{formatBRL(String(Math.abs(balance)))}
               </span>
             </div>
           </div>

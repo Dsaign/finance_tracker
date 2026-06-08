@@ -92,6 +92,10 @@ pip install -r requirements.txt
 # Configure as variáveis de ambiente
 cp .env.example .env
 # Edite o .env com suas credenciais do MySQL
+
+# Rode o servidor
+uvicorn app.main:app --reload        # http://localhost:8000
+# Docs interativas: http://localhost:8000/docs
 ```
 
 ### 3. Frontend
@@ -103,7 +107,7 @@ npm run dev                      # http://localhost:5173
 # Proxy automático: /api/* → http://localhost:8000
 ```
 
-### 3. Banco de dados
+### 4. Banco de dados
 
 ```bash
 # Crie o banco no MySQL antes de rodar as migrations
