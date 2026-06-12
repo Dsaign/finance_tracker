@@ -19,3 +19,4 @@ class ImportResult(BaseModel):
     filename: str
     total_parsed: int
     total_inserted: int
+    total_skipped: int

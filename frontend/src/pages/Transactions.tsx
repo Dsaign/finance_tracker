@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import { toast } from 'sonner'
-import { Trash2, Plus, Pencil, ChevronLeft, ChevronRight, Download, CheckCircle2 } from 'lucide-react'
+import { Trash2, Plus, Pencil, ChevronLeft, ChevronRight, Download, CheckCircle2, AlertCircle } from 'lucide-react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -436,6 +436,11 @@ export default function Transactions() {
               <div className="text-sm space-y-1 text-muted-foreground">
                 <p><span className="font-medium text-foreground">{importResult.total_parsed}</span> linhas lidas</p>
                 <p><span className="font-medium text-foreground">{importResult.total_inserted}</span> transações inseridas</p>
+                {importResult.total_skipped > 0 && (
+                  <p className="flex items-center gap-1 text-amber-600 dark:text-amber-400">
+                    <AlertCircle size={13} /> {importResult.total_skipped} já existiam no sistema e foram ignoradas
+                  </p>
+                )}
               </div>
             </div>
           ) : (

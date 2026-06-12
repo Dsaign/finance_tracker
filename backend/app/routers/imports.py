@@ -75,8 +75,22 @@ async def import_file(
         db.rollback()
         raise HTTPException(status_code=422, detail=f"Erro ao processar o arquivo: {exc}")
 
-    # ── 7. Insere transações ──────────────────────────────────────────────────
+    # ── 7. Insere transações (dedup contra BD) ────────────────────────────────
+    existing_hashes: set[str] = {
+        row[0]
+        for row in db.query(Transaction.hash).filter(Transaction.account_id == account_id).all()
+    }
+
+    inserted = 0
+    skipped = 0
+
     for pt in parsed:
+        tx_hash = Transaction.make_hash(account_id, pt.date, pt.description, pt.amount)
+
+        if tx_hash in existing_hashes:
+            skipped += 1
+            continue
+
         tx = Transaction(
             account_id=account_id,
             import_file_id=import_record.id,
@@ -84,14 +98,12 @@ async def import_file(
             description=pt.description,
             amount=pt.amount,
             flow=pt.flow,
-            hash=Transaction.make_hash(account_id, pt.date, pt.description, pt.amount),
+            hash=tx_hash,
             external_id=pt.external_id,
             is_manual=False,
             competencia=pt.date.strftime("%Y-%m"),
         )
         db.add(tx)
-
-    inserted = len(parsed)
 
     # ── 8. Finaliza ───────────────────────────────────────────────────────────
     import_record.status = ImportStatus.processed
@@ -102,6 +114,7 @@ async def import_file(
         filename=import_record.filename,
         total_parsed=len(parsed),
         total_inserted=inserted,
+        total_skipped=skipped,
     )
 
 
