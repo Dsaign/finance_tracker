@@ -7,13 +7,13 @@ Aplicação pessoal de controle financeiro com importação de extratos bancári
 - **Backend:** FastAPI + SQLAlchemy 2.x + Alembic
 - **Frontend:** React + TypeScript + Vite + Recharts
 - **Banco de dados:** MySQL (utf8mb4)
-- **Importação:** Parsers por instituição (Nubank CSV, Bradesco OFX, ...)
+- **Importação:** Parsers por instituição (Nubank CSV, Bradesco OFX, Bradesco CSV)
 
 ---
 
 ## Funcionalidades
 
-- Importação de extratos bancários via dialog (CSV Nubank, OFX Bradesco) com drag-and-drop e deduplicação automática
+- Importação de extratos bancários via dialog (CSV Nubank, OFX/CSV Bradesco) com drag-and-drop e deduplicação automática
 - Extrato com abas por conta, busca, filtro por tipo, totais de Entradas/Saídas e paginação adaptativa
 - Criação e edição manual de transações (independente da importação)
 - Categorização automática por tags via regras de keyword; edição manual de tags por transação
@@ -45,7 +45,8 @@ finance_tracker/
 │   │   ├── parsers/            ← leitores de extrato por instituição
 │   │   │   ├── base.py         ← interface comum (BaseParser)
 │   │   │   ├── nubank.py       ← CSV (date, title, amount)
-│   │   │   └── bradesco.py     ← OFX
+│   │   │   ├── bradesco.py     ← OFX (Internet Banking)
+│   │   │   └── bradesco_csv.py ← CSV (App — Data;Histórico;Docto.;...)
 │   │   ├── routers/            ← endpoints FastAPI
 │   │   │   ├── institutions.py, accounts.py, transactions.py
 │   │   │   ├── imports.py, tags.py, goals.py, dashboard.py
@@ -170,7 +171,8 @@ Cada instituição tem seu próprio parser em `app/parsers/`. A interface é sem
 |---|---|---|
 | Nubank Cartão | CSV (`date, title, amount`) | `nubank.py` |
 | Nubank Conta Corrente | CSV (`Data, Valor, Identificador, Descrição`) | `nubank.py` |
-| Bradesco | OFX | `bradesco.py` |
+| Bradesco | OFX (Internet Banking) | `bradesco.py` |
+| Bradesco | CSV (App — `Data;Histórico;Docto.;Crédito;Débito`) | `bradesco_csv.py` |
 
 Para adicionar uma nova instituição:
 1. Crie `app/parsers/<nome>.py` implementando a classe `BaseParser`

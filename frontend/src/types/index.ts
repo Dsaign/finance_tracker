@@ -27,6 +27,8 @@ export interface Account {
   type: AccountType
   currency: string
   active: boolean
+  opening_balance: string
+  opening_date: string | null
   institution: Institution
   created_at: string
   updated_at: string | null

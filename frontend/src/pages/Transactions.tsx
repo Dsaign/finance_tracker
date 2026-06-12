@@ -226,8 +226,12 @@ export default function Transactions() {
   const totalPages = data ? Math.ceil(data.total / pageSize) : 1
   const accountMap = new Map(accounts.map(a => [a.id, a]))
   const showAccountCol = selectedAccount === 'all'
+  const activeAccount = selectedAccount !== 'all'
+    ? accounts.find(a => a.id === parseInt(selectedAccount)) ?? null
+    : null
+  const openingBalance = activeAccount ? parseFloat(activeAccount.opening_balance) : 0
   const balance = data
-    ? parseFloat(data.total_income) - parseFloat(data.total_expense)
+    ? openingBalance + parseFloat(data.total_income) - parseFloat(data.total_expense)
     : null
 
   return (

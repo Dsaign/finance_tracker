@@ -17,10 +17,12 @@ Exemplo de uso:
 from app.parsers.base import BaseParser, ParsedTransaction
 from app.parsers.nubank import NubankParser
 from app.parsers.bradesco import BradescoParser
+from app.parsers.bradesco_csv import BradescoCSVParser
 
 PARSER_REGISTRY: dict[str, type[BaseParser]] = {
     NubankParser.PARSER_TYPE: NubankParser,
     BradescoParser.PARSER_TYPE: BradescoParser,
+    BradescoCSVParser.PARSER_TYPE: BradescoCSVParser,
 }
 
 
@@ -46,6 +48,7 @@ __all__ = [
     "ParsedTransaction",
     "NubankParser",
     "BradescoParser",
+    "BradescoCSVParser",
     "PARSER_REGISTRY",
     "get_parser",
 ]

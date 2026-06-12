@@ -20,7 +20,7 @@ Nome do produto: **Mirante**.
 
 ### Backend (`backend/app/`) — completo
 - `models/` — todos os models SQLAlchemy validados
-- `parsers/` — Nubank CSV (cartão de crédito e conta corrente, detecção automática por header) e Bradesco OFX
+- `parsers/` — Nubank CSV (cartão de crédito e conta corrente, detecção automática por header), Bradesco OFX e Bradesco CSV (exportado pelo app, formato `Data;Histórico;Docto.;Crédito;Débito;Saldo`, encoding UTF-8 com BOM)
 - `schemas/` — Pydantic schemas para todas as entidades
 - `routers/institutions.py` — CRUD de instituições
 - `routers/accounts.py` — CRUD de contas e grupos de contas

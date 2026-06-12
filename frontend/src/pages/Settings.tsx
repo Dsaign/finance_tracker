@@ -14,6 +14,7 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { api } from '@/api'
+import { CurrencyInput } from '@/components/ui/currency-input'
 import { InstitutionName } from '@/components/ui/institution-logo'
 import { UnderlineTabs, UnderlineTabsList, UnderlineTabsTrigger, UnderlineTabsContent } from '@/components/ui/underline-tabs'
 import { ACCOUNT_TYPE_LABEL } from '@/lib/utils'
@@ -22,6 +23,7 @@ import type { Account, AccountGroup, AccountType, Institution } from '@/types'
 const PARSERS = [
   { value: 'nubank_csv',    label: 'Nubank (CSV)' },
   { value: 'bradesco_ofx', label: 'Bradesco (OFX)' },
+  { value: 'bradesco_csv', label: 'Bradesco (CSV — App)' },
 ]
 
 const ACCOUNT_TYPES = Object.entries(ACCOUNT_TYPE_LABEL) as [AccountType, string][]
@@ -200,7 +202,7 @@ function AccountGroupDialog({ open, editGroup, onClose, onSaved }: {
 
 // ── AccountDialog ─────────────────────────────────────────────────────────────
 
-const ACCT_EMPTY = { name: '', institution_id: '', account_group_id: '', type: '' as AccountType | '', currency: 'BRL', active: true }
+const ACCT_EMPTY = { name: '', institution_id: '', account_group_id: '', type: '' as AccountType | '', currency: 'BRL', active: true, opening_balance: '', opening_date: '' }
 
 function AccountDialog({ open, editAcct, institutions, groups, onClose, onSaved }: {
   open: boolean
@@ -222,6 +224,8 @@ function AccountDialog({ open, editAcct, institutions, groups, onClose, onSaved 
       type:             editAcct.type,
       currency:         editAcct.currency,
       active:           editAcct.active,
+      opening_balance:  editAcct.opening_balance,
+      opening_date:     editAcct.opening_date ?? '',
     } : ACCT_EMPTY)
   }, [open, editAcct])
 
@@ -239,6 +243,8 @@ function AccountDialog({ open, editAcct, institutions, groups, onClose, onSaved 
         type:             form.type as AccountType,
         currency:         form.currency,
         active:           form.active,
+        opening_balance:  form.opening_balance || '0.00',
+        opening_date:     form.opening_date || null,
       }
       if (editAcct) {
         await api.accounts.update(editAcct.id, payload)
@@ -306,6 +312,26 @@ function AccountDialog({ open, editAcct, institutions, groups, onClose, onSaved 
                 {groups.map(g => <SelectItem key={g.id} value={String(g.id)}>{g.name}</SelectItem>)}
               </SelectContent>
             </Select>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>Saldo inicial <span className="text-xs text-muted-foreground">(opcional)</span></Label>
+              <CurrencyInput
+                prefix="R$"
+                placeholder="0,00"
+                value={form.opening_balance}
+                onChange={v => setForm(f => ({ ...f, opening_balance: v }))}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>Data de abertura <span className="text-xs text-muted-foreground">(opcional)</span></Label>
+              <input
+                type="date"
+                value={form.opening_date}
+                onChange={e => setForm(f => ({ ...f, opening_date: e.target.value }))}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
           </div>
           <div className="flex items-center justify-between py-1">
             <Label>Conta ativa</Label>
