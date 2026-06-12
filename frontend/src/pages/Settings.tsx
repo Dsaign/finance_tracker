@@ -23,7 +23,7 @@ import type { Account, AccountGroup, AccountType, Institution } from '@/types'
 const PARSERS = [
   { value: 'nubank_csv',    label: 'Nubank (CSV)' },
   { value: 'bradesco_ofx', label: 'Bradesco (OFX)' },
-  { value: 'bradesco_csv', label: 'Bradesco (CSV — App)' },
+  { value: 'bradesco_csv', label: 'Bradesco (CSV)' },
 ]
 
 const ACCOUNT_TYPES = Object.entries(ACCOUNT_TYPE_LABEL) as [AccountType, string][]

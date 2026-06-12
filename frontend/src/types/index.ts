@@ -86,7 +86,6 @@ export interface ImportResult {
   filename: string
   total_parsed: number
   total_inserted: number
-  total_skipped: number
 }
 
 // ── Goals e Dívidas ───────────────────────────────────────────────────────────

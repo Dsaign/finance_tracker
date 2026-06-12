@@ -27,10 +27,8 @@ async def import_file(
     if not raw_bytes:
         raise HTTPException(status_code=400, detail="Arquivo vazio.")
 
-    # ── 2. Deduplicação por MD5 (mesmo arquivo reimportado) ───────────────────
+    # ── 2. Hash do arquivo (apenas para registro) ─────────────────────────────
     file_hash = hashlib.md5(raw_bytes).hexdigest()
-    if db.query(ImportFile).filter(ImportFile.file_hash == file_hash).first():
-        raise HTTPException(status_code=409, detail="Este arquivo já foi importado anteriormente.")
 
     # ── 3. Valida conta e obtém parser ────────────────────────────────────────
     account = (
@@ -77,23 +75,8 @@ async def import_file(
         db.rollback()
         raise HTTPException(status_code=422, detail=f"Erro ao processar o arquivo: {exc}")
 
-    # ── 7. Insere transações (dedup por hash) ─────────────────────────────────
-    inserted = 0
-    skipped = 0
-
-    # Carrega todos os hashes existentes da conta para checar dedup em memória
-    existing_hashes: set[str] = {
-        row[0]
-        for row in db.query(Transaction.hash).filter(Transaction.account_id == account_id).all()
-    }
-
+    # ── 7. Insere transações ──────────────────────────────────────────────────
     for pt in parsed:
-        tx_hash = Transaction.make_hash(account_id, pt.date, pt.description, pt.amount)
-
-        if tx_hash in existing_hashes:
-            skipped += 1
-            continue
-
         tx = Transaction(
             account_id=account_id,
             import_file_id=import_record.id,
@@ -101,14 +84,14 @@ async def import_file(
             description=pt.description,
             amount=pt.amount,
             flow=pt.flow,
-            hash=tx_hash,
+            hash=Transaction.make_hash(account_id, pt.date, pt.description, pt.amount),
             external_id=pt.external_id,
             is_manual=False,
             competencia=pt.date.strftime("%Y-%m"),
         )
         db.add(tx)
-        existing_hashes.add(tx_hash)  # evita duplicatas dentro do próprio arquivo
-        inserted += 1
+
+    inserted = len(parsed)
 
     # ── 8. Finaliza ───────────────────────────────────────────────────────────
     import_record.status = ImportStatus.processed
@@ -119,7 +102,6 @@ async def import_file(
         filename=import_record.filename,
         total_parsed=len(parsed),
         total_inserted=inserted,
-        total_skipped=skipped,
     )
 
 
